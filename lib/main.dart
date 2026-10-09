@@ -20,12 +20,12 @@ void main() async {
     await initializeDateFormatting('vi_VN', null);
   } catch (_) {}
   try {
-    await FirebaseSyncService().initialize();
-  } catch (_) {}
-  try {
     await EventReminderService().loadSettings();
   } catch (_) {}
   runApp(const SoGioApp());
+
+  // Kết nối Firebase ngầm, tuyệt đối không chặn khởi chạy giao diện
+  FirebaseSyncService().initialize().catchError((_) => false);
 }
 
 class SoGioApp extends StatefulWidget {
