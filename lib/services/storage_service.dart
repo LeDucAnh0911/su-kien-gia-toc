@@ -67,6 +67,35 @@ class StorageService {
   static const String _keyFocusPersonId = 'app_family_focus_id';
   static const String _keyFamilySyncCode = 'app_family_sync_code';
   static const String _keyLastSyncTime = 'app_last_sync_time';
+  static const String _keyUserRole = 'app_user_role'; // 'admin' (Trưởng họ) hoặc 'member' (Con cháu)
+  static const String _keyCustomFirebaseConfig = 'app_custom_firebase_config';
+
+  Future<String> loadUserRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyUserRole) ?? 'admin';
+  }
+
+  Future<void> saveUserRole(String role) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUserRole, role);
+  }
+
+  Future<Map<String, String>?> loadCustomFirebaseConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_keyCustomFirebaseConfig);
+    if (jsonStr == null || jsonStr.isEmpty) return null;
+    try {
+      final decoded = json.decode(jsonStr) as Map<String, dynamic>;
+      return decoded.map((k, v) => MapEntry(k, v.toString()));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveCustomFirebaseConfig(Map<String, String> config) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyCustomFirebaseConfig, json.encode(config));
+  }
 
   Future<String?> loadFamilySyncCode() async {
     final prefs = await SharedPreferences.getInstance();

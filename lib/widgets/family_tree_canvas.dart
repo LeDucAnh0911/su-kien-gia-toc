@@ -77,17 +77,83 @@ class _FamilyTreeCanvasState extends State<FamilyTreeCanvas> {
     _transformController.value = matrix;
   }
 
-  Future<void> _exportTreeAsImage() async {
+  void _showExportImageOptions() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.photo_library_outlined, color: Color(0xFF8B1E0F)),
+                  SizedBox(width: 8),
+                  Text('Xuất Ảnh Cây Gia Phả', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Lựa chọn độ phân giải ảnh phù hợp với mục đích sử dụng:',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
+              const SizedBox(height: 14),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.share, color: Colors.blue),
+                ),
+                title: const Text('Ảnh Chuẩn HD (Chia Sẻ Zalo / Xem Điện Thoại)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text('Độ phân giải 2x, dung lượng nhẹ, nạp nhanh, gửi tin nhắn tiện lợi', style: TextStyle(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _exportTreeWithPixelRatio(2.0, 'HD');
+                },
+              ),
+              const Divider(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD4AF37).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.print, color: Color(0xFF8B1E0F)),
+                ),
+                title: const Text('Đại Bản Hoàng Kim 4K (In Bạt Khổ Lớn Nhà Thờ Họ)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF8B1E0F))),
+                subtitle: const Text('Độ phân giải siêu nét 4x (Ultra-HD), cực nét để in bạt 2m - 3m treo nhà thờ họ', style: TextStyle(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _exportTreeWithPixelRatio(4.0, 'Ultra4K');
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportTreeWithPixelRatio(double ratio, String tag) async {
     try {
       final boundary = _treeBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (boundary == null) return;
-      final image = await boundary.toImage(pixelRatio: 2.0);
+      final image = await boundary.toImage(pixelRatio: ratio);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) return;
       final pngBytes = byteData.buffer.asUint8List();
 
       final now = DateTime.now();
-      final fileName = 'Cay_Gia_Pha_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}.png';
+      final fileName = 'Cay_Gia_Pha_${tag}_${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}.png';
 
       if (kIsWeb) {
         final xFile = XFile.fromData(
@@ -104,15 +170,15 @@ class _FamilyTreeCanvasState extends State<FamilyTreeCanvas> {
         final xFile = XFile(filePath, mimeType: 'image/png', name: fileName);
         await Share.shareXFiles(
           [xFile],
-          text: 'Ảnh Cây Gia Phả - Sự Kiện Gia Tộc',
+          text: 'Ảnh Cây Gia Phả ($tag) - Sự Kiện Gia Tộc',
         );
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã xuất ảnh Cây Gia Phả sắc nét thành công!'),
-            backgroundColor: Color(0xFF8B1E0F),
+          SnackBar(
+            content: Text('Đã xuất ảnh Cây Gia Phả ($tag) sắc nét thành công!'),
+            backgroundColor: const Color(0xFF8B1E0F),
           ),
         );
       }
@@ -281,7 +347,7 @@ class _FamilyTreeCanvasState extends State<FamilyTreeCanvas> {
                   tooltip: 'Xuất ảnh Cây Gia Phả sắc nét (PNG)',
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   constraints: const BoxConstraints(),
-                  onPressed: _exportTreeAsImage,
+                  onPressed: _showExportImageOptions,
                 ),
               ],
             ),

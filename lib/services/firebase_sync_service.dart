@@ -43,9 +43,19 @@ class FirebaseSyncService {
 
     try {
       if (Firebase.apps.isEmpty) {
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
+        final customConfig = await StorageService().loadCustomFirebaseConfig();
+        FirebaseOptions options = DefaultFirebaseOptions.currentPlatform;
+        if (customConfig != null && customConfig['apiKey']?.isNotEmpty == true) {
+          options = FirebaseOptions(
+            apiKey: customConfig['apiKey']!,
+            appId: customConfig['appId'] ?? options.appId,
+            messagingSenderId: customConfig['messagingSenderId'] ?? options.messagingSenderId,
+            projectId: customConfig['projectId'] ?? options.projectId,
+            authDomain: customConfig['authDomain'] ?? '${customConfig['projectId']}.firebaseapp.com',
+            storageBucket: customConfig['storageBucket'] ?? '${customConfig['projectId']}.appspot.com',
+          );
+        }
+        await Firebase.initializeApp(options: options);
       }
       _auth = FirebaseAuth.instance;
       _firestore = FirebaseFirestore.instance;
@@ -57,6 +67,13 @@ class FirebaseSyncService {
       _isInitialized = false;
       return false;
     }
+  }
+
+  /// Nạp lại Firebase với cấu hình mới
+  Future<bool> reinitializeWithCustomConfig(Map<String, String> config) async {
+    await StorageService().saveCustomFirebaseConfig(config);
+    _isInitialized = false;
+    return initialize();
   }
 
   /// Đăng nhập bằng Google trên Web và Mobile

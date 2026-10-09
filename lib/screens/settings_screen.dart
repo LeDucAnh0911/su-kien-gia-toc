@@ -45,6 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _googleUserName;
   DateTime? _lastSyncTime;
   bool _isSyncing = false;
+  String _userRole = 'admin'; // 'admin' (Trưởng họ) hoặc 'member' (Con cháu)
 
   bool _remindersEnabled = true;
   int _remindAdvanceDays = 3;
@@ -63,6 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadSyncState() async {
     final code = await widget.storageService.loadFamilySyncCode();
     final lastTime = await widget.storageService.loadLastSyncTime();
+    final role = await widget.storageService.loadUserRole();
     final user = FirebaseSyncService().currentUser;
     await EventReminderService().loadSettings();
     final rem = EventReminderService().settings;
@@ -70,6 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _syncCodeController.text = (code != null && code.isNotEmpty) ? code : 'LE-GIA-TOC-2026';
         _lastSyncTime = lastTime;
+        _userRole = role;
         _remindersEnabled = rem.enabled;
         _remindAdvanceDays = rem.advanceDays;
         _remindTienThuong = rem.remindTienThuong;
@@ -268,6 +271,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: const Icon(Icons.share, size: 18),
                     label: const Text('Xem & Sao Chép Sự Kiện Gửi Zalo', style: TextStyle(fontWeight: FontWeight.bold)),
                     onPressed: _showExportFamilyBookDialog,
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green.shade800,
+                          side: BorderSide(color: Colors.green.shade600),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        icon: const Icon(Icons.table_chart_outlined, size: 16),
+                        label: const Text('Xuất Excel Sự Kiện (.CSV)'),
+                        onPressed: () async {
+                          final ok = await BackupFileService.exportEventsCsv(
+                            context: context,
+                            events: widget.events,
+                          );
+                          if (ok && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Đã xuất danh sách Sự Kiện ra file Excel thành công!'),
+                                backgroundColor: Color(0xFF2E7D32),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.teal.shade800,
+                          side: BorderSide(color: Colors.teal.shade600),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        icon: const Icon(Icons.people_alt_outlined, size: 16),
+                        label: const Text('Xuất Excel Gia Phả (.CSV)'),
+                        onPressed: () async {
+                          final ok = await BackupFileService.exportFamilyCsv(
+                            context: context,
+                            people: widget.familyPeople,
+                          );
+                          if (ok && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Đã xuất danh sách Gia Phả ra file Excel thành công!'),
+                                backgroundColor: Color(0xFF00695C),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -651,7 +707,122 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
 
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF8B1E0F),
+                        side: const BorderSide(color: Color(0xFF8B1E0F)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      icon: const Icon(Icons.share, size: 18),
+                      label: const Text('Sao Chép Lời Mời Gia Tộc Gửi Zalo', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: _shareFamilyInvite,
+                    ),
+                  ),
+
                   const SizedBox(height: 14),
+
+                  // Phân quyền vai trò trong dòng họ
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : Colors.indigo.shade50.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.indigo.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.shield_outlined, size: 18, color: Colors.indigo),
+                            const SizedBox(width: 6),
+                            const Text('Vai Trò Trong Họ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _userRole == 'admin' ? const Color(0xFF8B1E0F) : Colors.teal,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                _userRole == 'admin' ? 'Trưởng họ (Toàn quyền)' : 'Con cháu (Xem an toàn)',
+                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _userRole == 'admin'
+                              ? 'Bạn có toàn quyền chỉnh sửa gia phả, thêm sự kiện và tải lên đám mây.'
+                              : 'Chế độ xem an toàn giúp bảo vệ dữ liệu gia tộc, tránh vô tình sửa đổi.',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: _userRole == 'admin' ? const Color(0xFF8B1E0F) : null,
+                                  foregroundColor: _userRole == 'admin' ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                                  side: BorderSide(color: _userRole == 'admin' ? const Color(0xFF8B1E0F) : Colors.grey.shade400),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                onPressed: () {
+                                  setState(() => _userRole = 'admin');
+                                  widget.storageService.saveUserRole('admin');
+                                },
+                                child: const Text('Trưởng họ (Admin)'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: _userRole == 'member' ? Colors.teal : null,
+                                  foregroundColor: _userRole == 'member' ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                                  side: BorderSide(color: _userRole == 'member' ? Colors.teal : Colors.grey.shade400),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                onPressed: () {
+                                  setState(() => _userRole = 'member');
+                                  widget.storageService.saveUserRole('member');
+                                },
+                                child: const Text('Con cháu (Thành viên)'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Cấu hình Firebase & Hướng dẫn Google Cloud
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.settings_suggest_outlined, size: 16),
+                          label: const Text('Cấu Hình Khóa Firebase Riêng', style: TextStyle(fontSize: 12)),
+                          onPressed: _showCustomFirebaseDialog,
+                        ),
+                      ),
+                      TextButton.icon(
+                        icon: const Icon(Icons.help_outline, size: 16, color: Colors.blue),
+                        label: const Text('Hướng Dẫn', style: TextStyle(fontSize: 12, color: Colors.blue)),
+                        onPressed: _showFirebaseGuideDialog,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
 
                   // Hai nút Tải lên & Kéo về đám mây
                   Row(
@@ -1383,6 +1554,186 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             },
             child: const Text('Đồng Ý Kéo Về'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _shareFamilyInvite() {
+    final code = _syncCodeController.text.trim();
+    if (code.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập Mã kết nối gia tộc trước khi chia sẻ.')),
+      );
+      return;
+    }
+    final inviteText = 'Kính gửi bà con dòng họ!\n\n'
+        'Mời mọi người cùng tham gia xem Cây Gia Phả & Lịch Giỗ trực tuyến của dòng họ ta:\n'
+        '👉 Mở ứng dụng ngay: https://leducanh0911.github.io/su-kien-gia-toc/?family=$code\n'
+        '🔑 Mã kết nối gia tộc: $code\n\n'
+        'Bà con chỉ cần bấm vào liên kết trên để xem toàn bộ phả hệ các đời và nhận thông báo các ngày giỗ trong năm!';
+    Clipboard.setData(ClipboardData(text: inviteText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Đã sao chép Lời Mời Gia Tộc kèm link! Hãy dán vào nhóm Zalo dòng họ.'),
+        backgroundColor: Color(0xFF8B1E0F),
+      ),
+    );
+  }
+
+  void _showCustomFirebaseDialog() async {
+    final currentConfig = await widget.storageService.loadCustomFirebaseConfig();
+    final apiKeyCtrl = TextEditingController(text: currentConfig?['apiKey'] ?? '');
+    final projectIdCtrl = TextEditingController(text: currentConfig?['projectId'] ?? '');
+    final appIdCtrl = TextEditingController(text: currentConfig?['appId'] ?? '');
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.cloud_circle_outlined, color: Colors.indigo),
+            SizedBox(width: 8),
+            Text('Cấu Hình Firebase Riêng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Nhập thông số dự án Firebase / Google Cloud của bạn để đồng bộ dữ liệu vào đám mây riêng của gia đình:',
+                style: TextStyle(fontSize: 13, color: Colors.grey),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: apiKeyCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'API Key (apiKey)',
+                  hintText: 'VD: AIzaSy...',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: projectIdCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Project ID (projectId)',
+                  hintText: 'VD: su-kien-gia-toc',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: appIdCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'App ID (appId - Tùy chọn)',
+                  hintText: 'VD: 1:123456789:web:...',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+            onPressed: () async {
+              final apiKey = apiKeyCtrl.text.trim();
+              final projectId = projectIdCtrl.text.trim();
+              if (apiKey.isEmpty || projectId.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Vui lòng nhập tối thiểu API Key và Project ID.')),
+                );
+                return;
+              }
+              Navigator.pop(ctx);
+              final cfg = {
+                'apiKey': apiKey,
+                'projectId': projectId,
+                'appId': appIdCtrl.text.trim(),
+              };
+              await FirebaseSyncService().reinitializeWithCustomConfig(cfg);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Đã cập nhật cấu hình Firebase dự án của bạn thành công!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            child: const Text('Lưu & Áp Dụng'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFirebaseGuideDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.menu_book_outlined, color: Color(0xFF8B1E0F)),
+            SizedBox(width: 8),
+            Text('Hướng Dẫn Google Cloud', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                '3 Bước Đơn Giản Để Đám Mây Hoạt Động Vĩnh Viễn Không Bị Hết Hạn:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF8B1E0F)),
+              ),
+              SizedBox(height: 12),
+              Text(
+                '1️⃣ Chuyển OAuth sang "In Production":\n'
+                '• Vào Google Cloud Console -> APIs & Services -> OAuth consent screen.\n'
+                '• Tại mục "Publishing status", bấm nút "Publish App" -> Chọn "Confirm".\n'
+                '• Token đăng nhập sẽ dùng vĩnh viễn không bao giờ hết hạn.',
+                style: TextStyle(fontSize: 12.5, height: 1.4),
+              ),
+              SizedBox(height: 10),
+              Text(
+                '2️⃣ Mở Firestore Database vĩnh viễn:\n'
+                '• Vào Firebase Console -> Firestore Database -> Thẻ "Rules".\n'
+                '• Thay quy tắc thành: "allow read, write: if true;" để không bị tự khóa sau 30 ngày dùng thử.\n'
+                '• Bấm "Publish".',
+                style: TextStyle(fontSize: 12.5, height: 1.4),
+              ),
+              SizedBox(height: 10),
+              Text(
+                '3️⃣ Lấy API Key & Project ID:\n'
+                '• Vào Firebase Console -> Project Settings (biểu tượng bánh răng) -> Cuộn xuống mục Your apps -> Web app.\n'
+                '• Copy apiKey và projectId dán vào nút "Cấu Hình Khóa Firebase Riêng".',
+                style: TextStyle(fontSize: 12.5, height: 1.4),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B1E0F), foregroundColor: Colors.white),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đã Hiểu'),
           ),
         ],
       ),

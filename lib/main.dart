@@ -62,6 +62,74 @@ class _SoGioAppState extends State<SoGioApp> {
       _familyPeople = loadedFamily;
       _isLoading = false;
     });
+
+    final inviteCode = Uri.base.queryParameters['family'] ?? Uri.base.queryParameters['join'];
+    if (inviteCode != null && inviteCode.trim().isNotEmpty) {
+      final code = inviteCode.trim().toUpperCase();
+      await _storageService.saveFamilySyncCode(code);
+      await _storageService.saveUserRole('member');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _promptJoinFamily(code);
+      });
+    }
+  }
+
+  void _promptJoinFamily(String code) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.diversity_3, color: Color(0xFF8B1E0F)),
+            SizedBox(width: 8),
+            Text('Lời Mời Gia Tộc', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Bạn nhận được lời mời tham gia dòng họ với Mã kết nối:'),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B1E0F).withOpacity(0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF8B1E0F).withOpacity(0.3)),
+              ),
+              child: Text(
+                code,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF8B1E0F), letterSpacing: 1.2),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Ứng dụng đã tự động liên kết mã này ở vai trò Thành viên (Con cháu). Bạn có thể xem toàn bộ cây phả hệ và ngày giỗ gia tộc!',
+              style: TextStyle(fontSize: 13, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B1E0F),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() => _currentTabIndex = 4); // Chuyển sang Cài đặt & Dữ liệu
+            },
+            child: const Text('Xem Dữ Liệu Gia Tộc'),
+          ),
+        ],
+      ),
+    );
   }
 
   // --- QUẢN LÝ SỰ KIỆN GIỖ ---
