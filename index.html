@@ -1,34 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+  <!-- Dynamic Base Href: Seamlessly supports GitHub Pages, Vercel, Custom Domains & Localhost -->
+  <script>
+    (function() {
+      var base = document.createElement('base');
+      var p = window.location.pathname;
+      if (p.indexOf('/su-kien-gia-toc') === 0) {
+        base.href = '/su-kien-gia-toc/';
+      } else {
+        base.href = '/';
+      }
+      document.head.insertBefore(base, document.head.firstChild);
+    })();
+  </script>
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
-  <base href="/su-kien-gia-toc/">
-
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Sự Kiện Gia Tộc - Lịch Âm Dương & Phả Hệ">
+  <meta name="description" content="Sự Kiện Gia Tộc - Lịch Âm Dương, Sự Kiện & Phả Hệ Hoàng Kim">
 
-  <!-- iOS meta tags & icons -->
+  <!-- iOS meta tags & icons for Standalone PWA -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Sự Kiện Gia Tộc">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <meta name="theme-color" content="#8B1E0F">
+
+  <!-- Apple Touch Icons (Crisp Royal Icon for iPhone & iPad Home Screen) -->
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon-precomposed" href="apple-touch-icon.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="shortcut icon" type="image/png" href="favicon.png"/>
 
   <title>Sự Kiện Gia Tộc</title>
   <link rel="manifest" href="manifest.json">
@@ -38,6 +44,7 @@
       padding: 0;
       background-color: #8B1E0F;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
     }
     #loading {
       position: fixed;
@@ -52,29 +59,37 @@
       z-index: 999999;
     }
     .logo-box {
-      width: 68px;
-      height: 68px;
+      width: 76px;
+      height: 76px;
       border: 2px solid #D4AF37;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 34px;
       margin-bottom: 16px;
       background: rgba(212, 175, 55, 0.15);
-      box-shadow: 0 0 24px rgba(212, 175, 55, 0.4);
+      box-shadow: 0 0 28px rgba(212, 175, 55, 0.45);
+      overflow: hidden;
+    }
+    .logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
     }
     .title {
-      font-size: 21px;
+      font-size: 22px;
       font-weight: 800;
       color: #D4AF37;
       letter-spacing: 1.5px;
       margin-bottom: 6px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.4);
     }
     .subtitle {
       font-size: 13.5px;
       color: #F3E5AB;
       margin-bottom: 24px;
+      opacity: 0.9;
     }
     .spinner {
       width: 38px;
@@ -91,7 +106,9 @@
 </head>
 <body>
   <div id="loading">
-    <div class="logo-box">🏛️</div>
+    <div class="logo-box">
+      <img src="apple-touch-icon.png" alt="Sự Kiện Gia Tộc" />
+    </div>
     <div class="title">SỰ KIỆN GIA TỘC</div>
     <div class="subtitle">Lịch Âm Dương & Phả Hệ Hoàng Kim</div>
     <div class="spinner"></div>
@@ -102,7 +119,7 @@
       if (l) {
         l.style.transition = 'opacity 0.35s ease';
         l.style.opacity = '0';
-        setTimeout(function() { l.remove(); }, 350);
+        setTimeout(function() { if (l && l.parentNode) l.parentNode.removeChild(l); }, 350);
       }
     }
     window.addEventListener('flutter-first-frame', removeLoading);
@@ -113,6 +130,19 @@
       }
     });
     obs.observe(document.body, { childList: true, subtree: true });
+
+    // Đăng ký Service Worker Cache-First để nạp tức thì trong < 1s trên iPhone/Android
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('flutter_service_worker.js?v=20261009_2')
+          .then(function(reg) {
+            console.log('PWA ServiceWorker ready with scope:', reg.scope);
+          })
+          .catch(function(err) {
+            console.log('SW registration note:', err);
+          });
+      });
+    }
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
