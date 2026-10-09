@@ -1,0 +1,4083 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Sổ Giỗ & Lịch Gia Tộc - Lịch Âm & Hiếu Nghĩa</title>
+  
+  <meta name="description" content="Ứng dụng Sổ Giỗ & Lịch Gia Tộc - Ghi nhớ ngày giỗ, lịch âm dương vạn niên, văn khấn cổ truyền, quản lý mâm cỗ và dòng họ.">
+  <meta name="theme-color" content="#8B1E0F">
+  
+  <!-- Apple iOS Mobile Web App / PWA Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sổ Giỗ">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="family.css?v=4">
+
+  <!-- Google Fonts: Playfair Display / Noto Serif & Be Vietnam Pro -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #8B1E0F;
+      --primary-dark: #641106;
+      --primary-light: #B7321F;
+      --gold: #D4AF37;
+      --gold-light: #F3E5AB;
+      --gold-dark: #996515;
+      --gold-gradient: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #AA771C 100%);
+      --bg-body: #F7F2E8;
+      --bg-card: #FFFFFF;
+      --bg-paper: #FDFBF7;
+      --text-main: #2C1810;
+      --text-muted: #6B5B53;
+      --border-color: #E6D8C5;
+      --shadow-sm: 0 2px 8px rgba(139, 30, 15, 0.06);
+      --shadow-md: 0 6px 20px rgba(139, 30, 15, 0.1);
+      --shadow-lg: 0 12px 32px rgba(139, 30, 15, 0.16);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+      --primary: #B83A28;
+      --primary-dark: #8B1E0F;
+      --primary-light: #D94F3B;
+      --gold: #E5C158;
+      --gold-light: #FBF0CC;
+      --gold-dark: #B38622;
+      --bg-body: #171210;
+      --bg-card: #231C19;
+      --bg-paper: #201916;
+      --text-main: #F4ECE1;
+      --text-muted: #A89B93;
+      --border-color: #3D312B;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Dong Son Drum Watermark Pattern */
+    .bg-drum-pattern {
+      background-image: radial-gradient(var(--border-color) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Layout: App Container */
+    .app-container {
+      display: flex;
+      flex: 1;
+      min-height: 100vh;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Sidebar Navigation (Desktop) */
+    .sidebar {
+      width: 290px;
+      background: linear-gradient(180deg, #7A180B 0%, #580E04 100%);
+      color: #FFF;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+      z-index: 40;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1.5px solid rgba(212, 175, 55, 0.3);
+    }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(0,0,0,0.15);
+    }
+
+    .logo-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--gold-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary-dark);
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      border: 2px solid #FFF;
+      flex-shrink: 0;
+    }
+
+    .logo-text h1 {
+      font-family: 'Cinzel', 'Playfair Display', serif;
+      font-size: 15px;
+      letter-spacing: 1px;
+      font-weight: 700;
+      color: #FFF;
+      text-transform: uppercase;
+      background: var(--gold-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-text p {
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 2px;
+      font-style: italic;
+    }
+
+    /* Sidebar Lunar Status Box */
+    .sidebar-lunar-box {
+      margin: 16px 16px 8px 16px;
+      padding: 14px 16px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sidebar-lunar-box::after {
+      content: '';
+      position: absolute;
+      right: -10px;
+      bottom: -10px;
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, rgba(212,175,55,0.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .lunar-today-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--gold);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .lunar-today-main {
+      font-size: 18px;
+      font-weight: 800;
+      color: #FFF;
+      margin-top: 4px;
+    }
+
+    .lunar-today-sub {
+      font-size: 11.5px;
+      color: rgba(255,255,255,0.8);
+      margin-top: 2px;
+    }
+
+    .lunar-today-solar {
+      font-size: 11px;
+      color: var(--gold-light);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    /* Sidebar Nav List */
+    .nav-list {
+      list-style: none;
+      padding: 12px 14px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 13.5px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .nav-item:hover {
+      background: rgba(255,255,255,0.12);
+      color: #FFF;
+    }
+
+    .nav-item.active {
+      background: rgba(255,255,255,0.18);
+      color: #FFF;
+      font-weight: 700;
+      border: 1px solid rgba(212, 175, 55, 0.5);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .nav-item.active i {
+      color: var(--gold);
+    }
+
+    .nav-item i {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      padding: 2px 8px;
+      background: var(--gold);
+      color: var(--primary-dark);
+      font-size: 11px;
+      font-weight: 800;
+      border-radius: var(--radius-full);
+    }
+
+    /* Sidebar Footer */
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .user-info-brief {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .user-avatar-mini {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(212, 175, 55, 0.2);
+      border: 1px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 14px;
+    }
+
+    .user-text-mini h4 {
+      font-size: 12px;
+      color: #FFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 140px;
+    }
+
+    .user-text-mini p {
+      font-size: 10px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .theme-toggle-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: var(--gold);
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .theme-toggle-btn:hover {
+      background: rgba(255,255,255,0.2);
+      transform: scale(1.05);
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow-y: auto;
+      max-height: 100vh;
+    }
+
+    /* Topbar */
+    .topbar {
+      height: 64px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .topbar-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-title h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 0.3px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-royal {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #FFF;
+      border: 1px solid var(--gold);
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(139, 30, 15, 0.2);
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .btn-royal:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 16px rgba(139, 30, 15, 0.3);
+      filter: brightness(1.08);
+    }
+
+    .btn-outline-royal {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .btn-outline-royal:hover {
+      background: rgba(139, 30, 15, 0.08);
+    }
+
+    .btn-gold {
+      background: var(--gold-gradient);
+      color: var(--primary-dark);
+      border: none;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+      transition: var(--transition);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 6px 18px rgba(212, 175, 55, 0.45);
+    }
+
+    /* Page Content Grid */
+    .page-body {
+      padding: 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Responsive Grid for Desktop */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      grid-template-areas:
+        "hero today"
+        "events notes"
+        "events bell";
+      gap: 24px;
+      align-items: start;
+    }
+    #heroCountdownContainer { grid-area: hero; }
+    #todayAuspiciousCard { grid-area: today; }
+    #eventsCard { grid-area: events; }
+    #notesCard { grid-area: notes; }
+    #bellCard { grid-area: bell; }
+
+    /* Hero Royal Countdown Card */
+    .hero-countdown-card {
+      background: linear-gradient(135deg, #7A180B 0%, #4D0E05 100%);
+      color: #FFF;
+      border-radius: var(--radius-lg);
+      padding: 26px 28px;
+      box-shadow: var(--shadow-lg);
+      border: 1.5px solid rgba(212, 175, 55, 0.7);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-countdown-card::before {
+      content: '';
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .hero-top-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .hero-badge-title {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(212,175,55,0.6);
+      color: var(--gold);
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hero-days-remaining {
+      background: rgba(212, 175, 55, 0.2);
+      border: 1px solid var(--gold);
+      color: var(--gold-light);
+      padding: 5px 14px;
+      border-radius: var(--radius-full);
+      font-weight: 800;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hero-event-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: #FFF;
+      margin-bottom: 6px;
+    }
+
+    .hero-person-detail {
+      font-size: 14.5px;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .hero-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      background: rgba(0,0,0,0.22);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 18px;
+    }
+
+    .hero-info-item label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .hero-info-item span {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--gold-light);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Today Auspicious Header Card */
+    .today-auspicious-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .auspicious-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+
+    .solar-date-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 13.5px;
+      font-weight: 600;
+    }
+
+    .hoang-dao-pill {
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hoang-dao-pill.good {
+      background: #E8F5E9;
+      color: #2E7D32;
+      border: 1px solid #A5D6A7;
+    }
+
+    .hoang-dao-pill.bad {
+      background: #FFF3E0;
+      color: #E65100;
+      border: 1px solid #FFCC80;
+    }
+
+    .auspicious-main-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .lunar-day-large {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: var(--gold-gradient);
+      color: var(--primary-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.4);
+      flex-shrink: 0;
+      border: 2px solid #FFF;
+    }
+
+    .lunar-day-large .num {
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .lunar-day-large .lbl {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .lunar-details-box h3 {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .lunar-details-box p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .auspicious-hours-section {
+      background: var(--bg-paper);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+    }
+
+    .auspicious-hours-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hours-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .hour-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    /* Section Cards & Lists */
+    .section-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .section-header h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Search & Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 200px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-paper);
+      color: var(--text-main);
+      font-size: 13.5px;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .search-box input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(139, 30, 15, 0.12);
+    }
+
+    .search-box i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .filter-chips {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-chip {
+      padding: 7px 14px;
+      border-radius: var(--radius-full);
+      font-size: 12.5px;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      background: var(--bg-paper);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .filter-chip.active {
+      background: var(--primary);
+      color: #FFF;
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(139, 30, 15, 0.2);
+    }
+
+    /* Event Items List */
+    .event-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .event-card-item {
+      background: var(--bg-paper);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .event-card-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary);
+    }
+
+    .event-card-item.urgent {
+      border-left: 4px solid var(--primary);
+      background: linear-gradient(90deg, rgba(139, 30, 15, 0.04) 0%, var(--bg-paper) 100%);
+    }
+
+    .event-avatar-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: rgba(139, 30, 15, 0.1);
+      border: 1px solid rgba(139, 30, 15, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .event-card-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .event-card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .event-card-lunar {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      margin-top: 2px;
+    }
+
+    .event-card-solar {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .event-card-badge {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .days-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11.5px;
+      font-weight: 700;
+      background: rgba(139, 30, 15, 0.1);
+      color: var(--primary);
+      border: 1px solid rgba(139, 30, 15, 0.25);
+    }
+
+    .days-badge.today {
+      background: #D32F2F;
+      color: #FFF;
+      border-color: #B71C1C;
+    }
+
+    .days-badge.tomorrow {
+      background: #E65100;
+      color: #FFF;
+      border-color: #EF6C00;
+    }
+
+    .anniversary-badge {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Month Calendar Grid View */
+    .calendar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .calendar-month-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-paper);
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .calendar-month-bar h3 {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .cal-nav-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .cal-nav-btn:hover {
+      background: var(--primary);
+      color: #FFF;
+    }
+
+    .calendar-table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 5px;
+    }
+
+    .calendar-table th {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 8px 4px;
+      text-align: center;
+    }
+
+    .calendar-table th.sun, .calendar-table th.sat {
+      color: #D32F2F;
+    }
+
+    .cal-cell {
+      height: 102px;
+      background: var(--bg-paper);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 9px;
+      cursor: pointer;
+      vertical-align: top;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .cal-cell:hover {
+      background: rgba(212, 175, 55, 0.12);
+      border-color: var(--gold);
+    }
+
+    .cal-cell.today {
+      border: 1.5px solid #2E7D32;
+      background: rgba(46, 125, 50, 0.06);
+    }
+
+    .cal-cell.selected {
+      border: 2px solid var(--primary);
+      background: rgba(139, 30, 15, 0.12);
+    }
+
+    .cal-cell.empty {
+      background: transparent;
+      border-color: transparent;
+      cursor: default;
+    }
+
+    .cal-cell-header {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+
+    .cal-solar-num {
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .cal-cell.sun .cal-solar-num {
+      color: #D32F2F;
+    }
+
+    .cal-lunar-num {
+      font-size: 12.5px;
+      line-height: 1.2;
+      white-space: nowrap;
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .cal-lunar-num::before { content: 'Âm '; font-weight: 500; }
+
+    .cal-lunar-num.first-day, .cal-lunar-num.ram {
+      font-weight: 800;
+      color: #C62828;
+    }
+
+    .cal-markers {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .cal-marker-line { display: flex; align-items: center; gap: 5px; min-width: 0; }
+    .cal-marker-text { display: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; font-weight: 700; color: var(--primary); }
+    .cal-marker-line.note .cal-marker-text { color: #00796B; }
+    @media (min-width: 1050px) {
+      .cal-marker-text { display: block; }
+    }
+
+    .cal-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex: none;
+    }
+
+    .cal-dot.event { background: var(--primary); }
+    .cal-dot.note { background: #00897B; }
+
+    /* Prayers Catalog Cards */
+    .prayers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px;
+    }
+
+    .prayer-card {
+      background: var(--bg-paper);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .prayer-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--gold);
+    }
+
+    .prayer-card h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 15.5px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .prayer-card p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-dialog {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      max-width: 640px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 48px rgba(0,0,0,0.3);
+      border: 1.5px solid var(--border-color);
+      animation: modalFadeIn 0.25s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .modal-close-btn {
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: var(--bg-paper);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background: var(--bg-paper);
+      color: var(--text-main);
+      font-size: 13.5px;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(139, 30, 15, 0.12);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    /* Fullscreen Reading Mode for Prayers */
+    .prayer-reader-modal .modal-dialog {
+      max-width: 860px;
+      background: #FDFBF4;
+      color: #2C1810;
+    }
+
+    [data-theme="dark"] .prayer-reader-modal .modal-dialog {
+      background: #1C1614;
+      color: #F4EBE1;
+    }
+
+    .prayer-reader-content {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 19px;
+      line-height: 1.85;
+      white-space: pre-line;
+      padding: 10px 16px;
+      user-select: text;
+    }
+
+    /* Bottom Navigation Bar for Mobile */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-color);
+      z-index: 50;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.06);
+    }
+
+    .bottom-nav-inner {
+      display: flex;
+      height: 100%;
+    }
+
+    .bottom-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 10.5px;
+      font-weight: 500;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .bottom-nav-item.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .bottom-nav-item.active i {
+      color: var(--primary);
+      transform: scale(1.1);
+    }
+
+    /* ========================================================
+       MOBILE & IPHONE (iOS) RESPONSIVE OPTIMIZATION
+       ======================================================== */
+    .mobile-only {
+      display: none !important;
+    }
+    .desktop-only {
+      display: inline-flex !important;
+    }
+
+    /* Floating Action Button for Mobile */
+    .fab-add-mobile {
+      display: none;
+      position: fixed;
+      right: 18px;
+      bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #FFF;
+      border: 1.5px solid var(--gold);
+      box-shadow: 0 8px 24px rgba(139, 30, 15, 0.45);
+      z-index: 45;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      touch-action: manipulation;
+    }
+    .fab-add-mobile:active {
+      transform: scale(0.92);
+    }
+
+    /* Tactile Touch Feedback */
+    button, .btn-royal, .btn-outline-royal, .btn-gold, .event-card-item, .bottom-nav-item, .cal-nav-btn {
+      touch-action: manipulation;
+    }
+    button:active, .btn-royal:active, .btn-outline-royal:active, .btn-gold:active, .event-card-item:active {
+      transform: scale(0.97);
+    }
+
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+      }
+      #heroCountdownContainer { order: 1; }
+      #todayAuspiciousCard { order: 2; }
+      #eventsCard { order: 3; }
+      #notesCard { order: 4; }
+      #bellCard { order: 5; }
+    }
+
+    @media (max-width: 768px) {
+      .desktop-only {
+        display: none !important;
+      }
+      .mobile-only {
+        display: inline-flex !important;
+      }
+      .fab-add-mobile {
+        display: flex;
+      }
+
+      /* Base layout on iPhone */
+      .sidebar {
+        display: none !important;
+      }
+      .main-content {
+        max-height: 100dvh;
+        height: 100dvh;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* iOS Form Auto-Zoom Prevention */
+      input, select, textarea, .form-control, .search-box input {
+        font-size: 16px !important;
+      }
+
+      /* Topbar Mobile */
+      .topbar {
+        padding-top: env(safe-area-inset-top, 0px);
+        height: calc(56px + env(safe-area-inset-top, 0px));
+        padding-left: 14px;
+        padding-right: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .topbar-title {
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+      }
+      .topbar-title h2 {
+        font-size: 15.5px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .topbar-actions {
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .cal-nav-btn.mobile-only {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        font-size: 13.5px;
+        background: var(--bg-paper);
+        border: 1px solid var(--border-color);
+      }
+
+      /* Page Body */
+      .page-body {
+        padding: 12px 14px;
+        padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+        gap: 16px;
+      }
+
+      /* Bottom Navigation with iOS Home Bar Safe Area */
+      .bottom-nav {
+        display: block;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: calc(58px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid var(--border-color);
+        z-index: 50;
+        box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.08);
+      }
+      [data-theme="dark"] .bottom-nav {
+        background: rgba(35, 28, 25, 0.94);
+      }
+      .bottom-nav-inner {
+        height: 58px;
+        align-items: center;
+      }
+      .bottom-nav-item {
+        font-size: 10px;
+        font-weight: 600;
+        gap: 3px;
+        touch-action: manipulation;
+      }
+      .bottom-nav-item i {
+        font-size: 17px;
+      }
+
+      /* Hero Countdown Card on Mobile */
+      .hero-countdown-card {
+        padding: 16px 16px;
+        border-radius: var(--radius-md);
+      }
+      .hero-top-badge-row {
+        margin-bottom: 10px;
+      }
+      .hero-badge-title {
+        font-size: 10px;
+        padding: 3px 8px;
+      }
+      .hero-days-remaining {
+        font-size: 12px;
+        padding: 4px 10px;
+      }
+      .hero-event-name {
+        font-size: 20px;
+        margin-bottom: 4px;
+        line-height: 1.3;
+      }
+      .hero-person-detail {
+        font-size: 13px;
+        margin-bottom: 12px;
+        gap: 6px;
+      }
+      .hero-info-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 10px 12px;
+        margin-bottom: 14px;
+      }
+      .hero-info-item label {
+        font-size: 10px;
+      }
+      .hero-info-item span {
+        font-size: 12px;
+      }
+      .hero-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+      }
+      .hero-actions button {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+
+      /* Today Auspicious Card */
+      .today-auspicious-card {
+        padding: 14px 16px;
+        border-radius: var(--radius-md);
+        gap: 12px;
+      }
+      .solar-date-badge {
+        font-size: 12px;
+      }
+      .hoang-dao-pill {
+        font-size: 10px;
+        padding: 2px 8px;
+      }
+      .auspicious-main-row {
+        gap: 12px;
+      }
+      .lunar-day-large {
+        width: 56px;
+        height: 56px;
+      }
+      .lunar-day-large .num {
+        font-size: 24px;
+      }
+      .lunar-day-large .lbl {
+        font-size: 9px;
+      }
+      .lunar-details-box h3 {
+        font-size: 15px;
+      }
+      .lunar-details-box p {
+        font-size: 11.5px;
+      }
+      .auspicious-hours-section {
+        padding: 10px 12px;
+      }
+      .auspicious-hours-title {
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+      .hours-chips-wrap {
+        gap: 4px;
+      }
+      .hour-chip {
+        font-size: 11px;
+        padding: 3px 8px;
+      }
+
+      /* Event List Cards */
+      .section-card {
+        padding: 16px;
+        border-radius: var(--radius-md);
+      }
+      .section-header h3 {
+        font-size: 16px;
+      }
+      .filter-bar {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .search-box {
+        width: 100%;
+        min-width: 100%;
+      }
+      .filter-chips {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+        flex-wrap: nowrap;
+        width: 100%;
+        scrollbar-width: none;
+      }
+      .filter-chips::-webkit-scrollbar {
+        display: none;
+      }
+      .filter-chip {
+        white-space: nowrap;
+        flex-shrink: 0;
+        font-size: 12px;
+        padding: 6px 12px;
+      }
+      .event-card-item {
+        padding: 12px 14px;
+        gap: 12px;
+      }
+      .event-avatar-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+      }
+      .event-card-title {
+        font-size: 14px;
+      }
+      .event-card-lunar {
+        font-size: 12px;
+      }
+      .event-card-solar {
+        font-size: 11px;
+      }
+      .days-badge {
+        padding: 3px 8px;
+        font-size: 10px;
+      }
+
+      /* Calendar View on Mobile */
+      .calendar-table {
+        border-spacing: 2px;
+      }
+      .calendar-table th {
+        padding: 4px 1px;
+        font-size: 11px;
+      }
+      .cal-cell {
+        height: 64px;
+        padding: 4px;
+        border-radius: 6px;
+      }
+      .cal-cell-header { gap: 2px; }
+      .cal-solar-num {
+        font-size: 17px;
+      }
+      .cal-lunar-num {
+        font-size: 11px;
+      }
+      .cal-lunar-num::before { content: ''; }
+      .cal-markers {
+        margin-top: 5px;
+        flex-direction: row;
+        gap: 4px;
+      }
+      .cal-dot {
+        width: 4px;
+        height: 4px;
+      }
+
+      /* Prayers Catalog Grid on Mobile */
+      .prayers-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      /* Native iOS Bottom Sheet for Modals */
+      .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+      }
+      .modal-dialog {
+        max-width: 100% !important;
+        width: 100% !important;
+        max-height: 88vh;
+        border-radius: 20px 20px 0 0 !important;
+        margin: 0;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
+        animation: slideUpMobile 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      @keyframes slideUpMobile {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+      }
+      .modal-header {
+        padding: 14px 18px;
+        position: relative;
+      }
+      .modal-header::before {
+        content: '';
+        position: absolute;
+        top: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 36px;
+        height: 4px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 2px;
+      }
+      [data-theme="dark"] .modal-header::before {
+        background: rgba(255,255,255,0.25);
+      }
+      .modal-body {
+        padding: 16px 18px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .modal-footer {
+        padding: 12px 18px calc(12px + env(safe-area-inset-bottom, 0px)) 18px;
+        display: flex;
+        gap: 8px;
+      }
+      .modal-footer button {
+        flex: 1;
+        justify-content: center;
+      }
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      /* Fullscreen Prayer Reader on iPhone */
+      .prayer-reader-modal .modal-dialog {
+        height: 100vh !important;
+        max-height: 100vh !important;
+        border-radius: 0 !important;
+      }
+      .prayer-reader-content {
+        font-size: 17px;
+        line-height: 1.75;
+        padding: 6px 4px;
+      }
+    }
+
+    /* Print Styles */
+    @media print {
+      .sidebar, .topbar, .bottom-nav, .btn-royal, .btn-outline-royal, .filter-bar, .modal-overlay {
+        display: none !important;
+      }
+      body {
+        background: #FFF !important;
+        color: #000 !important;
+      }
+      .main-content {
+        max-height: none !important;
+        overflow: visible !important;
+      }
+      .print-family-book {
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-drum-pattern">
+
+  <div class="app-container">
+    <!-- SIDEBAR (DESKTOP) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-badge">
+          <i class="fa-solid fa-gopuram"></i>
+        </div>
+        <div class="logo-text">
+          <h1>Sổ Giỗ Gia Tộc</h1>
+          <p>Hiếu Đạo • Lễ Nghi • Gắn Kết</p>
+        </div>
+      </div>
+
+      <!-- Quick Lunar Box -->
+      <div class="sidebar-lunar-box">
+        <div class="lunar-today-label">
+          <i class="fa-solid fa-moon"></i> Hôm Nay Âm Lịch
+        </div>
+        <div class="lunar-today-main" id="sidebarLunarDay">Ngày -- Tháng --</div>
+        <div class="lunar-today-sub" id="sidebarLunarCanChi">Năm -- • Ngày --</div>
+        <div class="lunar-today-solar" id="sidebarSolarDay">Dương lịch: --/--/----</div>
+      </div>
+
+      <!-- Nav Items -->
+      <ul class="nav-list">
+        <li class="nav-item active" onclick="switchTab('home')">
+          <i class="fa-solid fa-house"></i>
+          <span>Trang Chủ & Nhắc Giỗ</span>
+          <span class="nav-badge" id="sidebarEventCount">0</span>
+        </li>
+        <li class="nav-item" onclick="switchTab('calendar')">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>Lịch Âm Dương Vạn Niên</span>
+        </li>
+        <li class="nav-item" onclick="switchTab('prayers')">
+          <i class="fa-solid fa-book-open"></i>
+          <span>Kho Văn Khấn Cổ Truyền</span>
+        </li>
+        <li class="nav-item" onclick="switchTab('family')">
+          <i class="fa-solid fa-people-roof"></i>
+          <span>Gia Phả Dòng Họ</span>
+          <span class="nav-badge" id="sidebarFamilyCount">0</span>
+        </li>
+        <li class="nav-item" onclick="switchTab('export')">
+          <i class="fa-solid fa-print"></i>
+          <span>In Sổ Giỗ & Chia Sẻ Zalo</span>
+        </li>
+        <li class="nav-item" onclick="switchTab('settings')">
+          <i class="fa-solid fa-gear"></i>
+          <span>Cài Đặt & Dữ Liệu</span>
+        </li>
+      </ul>
+
+      <!-- Footer -->
+      <div class="sidebar-footer">
+        <div class="user-info-brief">
+          <div class="user-avatar-mini">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div class="user-text-mini">
+            <h4 id="sidebarGiaChuName">Gia tộc Việt Nam</h4>
+            <p id="sidebarDiaChi">Chưa đặt địa chỉ</p>
+          </div>
+        </div>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Chuyển chế độ Sáng/Tối">
+          <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-title">
+          <div class="mobile-only" style="width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg, #7A180B 0%, #580E04 100%); border:1px solid var(--gold); display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:14px; flex-shrink:0;">
+            <i class="fa-solid fa-gopuram"></i>
+          </div>
+          <h2 id="topbarTitle">Trang Chủ & Lễ Nghi Gia Tộc</h2>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn-outline-royal desktop-only" onclick="openModal('qrModal')" title="Mở và quét mã QR trên điện thoại iOS / Android">
+            <i class="fa-solid fa-qrcode"></i> Mở Trên Điện Thoại
+          </button>
+          <button class="btn-outline-royal desktop-only" onclick="openQuickConverter()">
+            <i class="fa-solid fa-right-left"></i> Đổi Lịch Âm Dương
+          </button>
+          <button id="topbarAddDesktop" class="btn-royal desktop-only" onclick="openAddEventModal()">
+            <i class="fa-solid fa-plus"></i> Thêm Ngày Giỗ
+          </button>
+          <a href="So_Gio_Gia_Toc.apk" download class="btn-gold desktop-only" title="Tải file APK cài đặt lên điện thoại Android">
+            <i class="fa-brands fa-android"></i> Tải App Android
+          </a>
+
+          <!-- Mobile Only Quick Action Icons -->
+          <button class="cal-nav-btn mobile-only" onclick="playTempleBell()" title="Thỉnh Chuông Khánh">
+            <i class="fa-solid fa-bell" style="color:var(--primary);"></i>
+          </button>
+          <button class="cal-nav-btn mobile-only" onclick="openQuickConverter()" title="Đổi Lịch Âm Dương">
+            <i class="fa-solid fa-right-left" style="color:var(--primary);"></i>
+          </button>
+          <button class="cal-nav-btn mobile-only" onclick="toggleTheme()" title="Đổi Sáng/Tối">
+            <i class="fa-solid fa-moon" id="mobileThemeIcon" style="color:var(--gold-dark);"></i>
+          </button>
+          <button id="topbarAddMobile" class="btn-royal mobile-only" style="padding:6px 12px; font-size:12px; border-radius:var(--radius-sm);" onclick="handleMobileAdd()" title="Thêm mục mới">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- PAGE BODY (DYNAMIC CONTENT) -->
+      <div class="page-body">
+        
+        <!-- TAB 1: TRANG CHỦ (HOME) -->
+        <section id="tab-home">
+          <div class="dashboard-grid">
+            <!-- 1. Countdown Hero -->
+            <div class="hero-countdown-card" id="heroCountdownContainer">
+              <!-- Sẽ render động qua JS -->
+            </div>
+
+            <!-- 2. Thẻ Ngày Hôm Nay & Giờ Hoàng Đạo -->
+            <div class="today-auspicious-card" id="todayAuspiciousCard">
+              <!-- Render động -->
+            </div>
+
+            <!-- 3. Danh Sách Ngày Giỗ & Bộ Lọc -->
+            <div class="section-card" id="eventsCard">
+              <div class="section-header">
+                <h3><i class="fa-solid fa-fire-flame-curved"></i> Ngày Giỗ & Lễ Kỷ Niệm Gia Tộc</h3>
+                <button class="btn-outline-royal" style="padding:4px 10px; font-size:12px;" onclick="openAddEventModal()">
+                  <i class="fa-solid fa-plus"></i> Thêm mới
+                </button>
+              </div>
+
+              <div class="filter-bar">
+                <div class="search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input type="text" id="eventSearchInput" placeholder="Tìm tên cụ, danh xưng (ông, bà, bác...)..." oninput="filterEvents()">
+                </div>
+                <div class="filter-chips">
+                  <div class="filter-chip active" onclick="setEventFilter('all', this)">Tất cả</div>
+                  <div class="filter-chip" onclick="setEventFilter('upcoming_30', this)">Sắp tới (30 ngày)</div>
+                  <div class="filter-chip" onclick="setEventFilter('this_month', this)">Trong tháng này</div>
+                </div>
+              </div>
+
+              <div class="event-list" id="eventListContainer">
+                <!-- Render động -->
+              </div>
+            </div>
+
+            <!-- 4. Thẻ Việc Cần Nhớ / Chuẩn Bị Giỗ -->
+            <div class="section-card" id="notesCard">
+              <div class="section-header">
+                <h3><i class="fa-solid fa-list-check" style="color:#00897B;"></i> Việc Cần Nhớ</h3>
+                <button class="btn-outline-royal" style="padding:4px 10px; font-size:12px; color:#00897B; border-color:#00897B;" onclick="openAddNoteModal()">
+                  <i class="fa-solid fa-plus"></i> Ghi chú
+                </button>
+              </div>
+              <div id="notesListContainer" style="display:flex; flex-direction:column; gap:10px;">
+                <!-- Render động -->
+              </div>
+            </div>
+
+            <!-- 5. Tiện ích thỉnh chuông đồng gia tiên -->
+            <div class="section-card" id="bellCard" style="text-align:center; padding:20px; background:linear-gradient(135deg, rgba(212,175,55,0.1) 0%, rgba(139,30,15,0.06) 100%);">
+              <h4 style="font-family:'Playfair Display',serif; font-size:15px; color:var(--primary); margin-bottom:6px;">
+                <i class="fa-solid fa-bell"></i> Chuông Khánh Gia Tiên
+              </h4>
+              <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+                Thỉnh một tiếng chuông đồng thanh tịnh trước khi đọc văn khấn hoặc thắp hương tưởng nhớ.
+              </p>
+              <button class="btn-royal" onclick="playTempleBell()">
+                <i class="fa-solid fa-volume-high"></i> Thỉnh Chuông Khánh
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 2: LỊCH ÂM DƯƠNG (CALENDAR) -->
+        <section id="tab-calendar" style="display:none;">
+          <div class="section-card">
+            <div class="calendar-container">
+              <div class="calendar-month-bar">
+                <button class="cal-nav-btn" onclick="prevMonth()"><i class="fa-solid fa-chevron-left"></i></button>
+                <h3 id="calMonthTitle">Tháng -- năm ----</h3>
+                <button class="cal-nav-btn" onclick="nextMonth()"><i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+
+              <div style="overflow-x:auto;">
+                <table class="calendar-table">
+                  <thead>
+                    <tr>
+                      <th><span class="desktop-only">Thứ Hai</span><span class="mobile-only">T2</span></th>
+                      <th><span class="desktop-only">Thứ Ba</span><span class="mobile-only">T3</span></th>
+                      <th><span class="desktop-only">Thứ Tư</span><span class="mobile-only">T4</span></th>
+                      <th><span class="desktop-only">Thứ Năm</span><span class="mobile-only">T5</span></th>
+                      <th><span class="desktop-only">Thứ Sáu</span><span class="mobile-only">T6</span></th>
+                      <th class="sat"><span class="desktop-only">Thứ Bảy</span><span class="mobile-only">T7</span></th>
+                      <th class="sun"><span class="desktop-only">Chủ Nhật</span><span class="mobile-only">CN</span></th>
+                    </tr>
+                  </thead>
+                  <tbody id="calTableBody">
+                    <!-- Render Lưới Lịch -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Panel Chi tiết ngày đang chọn -->
+            <div id="calSelectedDayPanel" style="margin-top:20px; padding:16px 20px; background:var(--bg-paper); border-radius:var(--radius-md); border:1px solid var(--border-color);">
+              <!-- Render động -->
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 3: KHO VĂN KHẤN (PRAYERS) -->
+        <section id="tab-prayers" style="display:none;">
+          <div class="section-card">
+            <div class="section-header">
+              <div>
+                <h3><i class="fa-solid fa-book-open"></i> Kho Văn Khấn Cổ Truyền Việt Nam</h3>
+                <p style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">
+                  Các bài văn khấn chuẩn mực theo tập tục dân gian, tự động điền họ tên Gia chủ và ngày cúng.
+                </p>
+              </div>
+            </div>
+
+            <div class="filter-chips" style="margin-bottom:18px;">
+              <div class="filter-chip active" onclick="setPrayerFilter('all', this)">Tất cả bài khấn</div>
+              <div class="filter-chip" onclick="setPrayerFilter('gio', this)">Ngày Giỗ Gia Tiên</div>
+              <div class="filter-chip" onclick="setPrayerFilter('tet', this)">Tết Nguyên Đán</div>
+              <div class="filter-chip" onclick="setPrayerFilter('ram_mung_mot', this)">Rằm & Mùng 1</div>
+              <div class="filter-chip" onclick="setPrayerFilter('le_tiet', this)">Lễ Tiết & Tảo Mộ</div>
+            </div>
+
+            <div class="prayers-grid" id="prayersGridContainer">
+              <!-- Render danh sách văn khấn -->
+            </div>
+          </div>
+        </section>
+
+        <!-- GIA PHẢ DÒNG HỌ -->
+        <section id="tab-family" style="display:none;">
+          <div class="family-hero">
+            <div class="family-hero-icon"><i class="fa-solid fa-people-roof"></i></div>
+            <div>
+              <div class="family-eyebrow">GÌN GIỮ CỘI NGUỒN</div>
+              <h2>Gia phả dòng họ</h2>
+              <p>Lưu lại từng người thân và kết nối các thế hệ, bên nội lẫn bên ngoại.</p>
+              <div class="family-stats" id="familyStats"></div>
+            </div>
+            <button class="btn-gold family-hero-add" onclick="openFamilyForm()"><i class="fa-solid fa-user-plus"></i> Thêm người thân</button>
+          </div>
+          <div class="section-card family-panel">
+            <div class="family-toolbar">
+              <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="familySearch" type="search" placeholder="Tìm tên, quê quán, ghi chép..." oninput="renderFamily()" aria-label="Tìm trong gia phả"></div>
+              <div class="family-view-switch" role="group" aria-label="Cách xem gia phả">
+                <button id="familyTreeButton" onclick="setFamilyView('tree')"><i class="fa-solid fa-sitemap"></i> Theo đời</button>
+                <button id="familyListButton" onclick="setFamilyView('list')"><i class="fa-solid fa-list"></i> Danh sách</button>
+              </div>
+            </div>
+            <div class="family-filters" role="group" aria-label="Lọc nhánh gia phả">
+              <button data-family-branch="all" onclick="setFamilyBranch('all')">Tất cả</button>
+              <button data-family-branch="noi" onclick="setFamilyBranch('noi')">Bên nội</button>
+              <button data-family-branch="ngoai" onclick="setFamilyBranch('ngoai')">Bên ngoại</button>
+              <button data-family-branch="khac" onclick="setFamilyBranch('khac')">Nhánh khác</button>
+            </div>
+            <div class="family-result-count" id="familyResultCount"></div>
+            <div id="familyContent"></div>
+          </div>
+        </section>
+
+        <!-- TAB 4: XUẤT SỔ GIỖ & ZALO (EXPORT) -->
+        <section id="tab-export" style="display:none;">
+          <div class="section-card">
+            <div class="section-header">
+              <div>
+                <h3><i class="fa-solid fa-print"></i> Sổ Giỗ Gia Tộc Bản In A4 & Chia Sẻ Zalo</h3>
+                <p style="font-size:12.5px; color:var(--text-muted); margin-top:2px;">
+                  Bản tổng hợp danh sách ngày giỗ trong năm để treo phòng thờ hoặc chia sẻ vào nhóm Zalo con cháu dòng họ.
+                </p>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <button class="btn-outline-royal" onclick="copyZaloText()">
+                  <i class="fa-solid fa-copy"></i> Sao chép gửi Zalo
+                </button>
+                <button class="btn-royal" onclick="window.print()">
+                  <i class="fa-solid fa-print"></i> In / Xuất PDF A4
+                </button>
+              </div>
+            </div>
+
+            <div id="familyBookPrintArea" style="background:#FFF; color:#2C1810; padding:32px; border-radius:var(--radius-md); border:1px solid #D4AF37; box-shadow:var(--shadow-md);">
+              <!-- Render bản Sổ Giỗ Cung Đình -->
+            </div>
+          </div>
+        </section>
+
+        <!-- TAB 5: CÀI ĐẶT & SAO LƯU (SETTINGS) -->
+        <section id="tab-settings" style="display:none;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:20px;">
+            <!-- Thông tin Gia chủ -->
+            <div class="section-card">
+              <div class="section-header">
+                <h3><i class="fa-solid fa-user-tag"></i> Thông Tin Gia Chủ</h3>
+              </div>
+              <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
+                Thông tin này sẽ tự động điền vào các bài văn khấn khi bạn đọc lễ trước bàn thờ.
+              </p>
+              <div class="form-group">
+                <label>Họ tên Gia chủ / Tín chủ:</label>
+                <input type="text" id="settingGiaChu" class="form-control" placeholder="VD: Lê Đức Anh">
+              </div>
+              <div class="form-group">
+                <label>Nơi cư ngụ / Địa chỉ thường trú:</label>
+                <input type="text" id="settingDiaChi" class="form-control" placeholder="VD: Số 12, Trần Phú, TP Hà Tĩnh">
+              </div>
+              <div class="form-group">
+                <label>Cỡ chữ khi đọc văn khấn:</label>
+                <select id="settingFontSize" class="form-control">
+                  <option value="16">Vừa (16px)</option>
+                  <option value="19" selected>Lớn - Dễ đọc (19px)</option>
+                  <option value="22">Rất lớn (22px)</option>
+                  <option value="26">Cực lớn (26px)</option>
+                </select>
+              </div>
+              <button class="btn-royal" onclick="saveProfileSettings()">
+                <i class="fa-solid fa-check"></i> Lưu Cài Đặt
+              </button>
+            </div>
+
+            <!-- Sao lưu & Phục hồi JSON -->
+            <div class="section-card">
+              <div class="section-header">
+                <h3><i class="fa-solid fa-cloud-arrow-up"></i> Sao Lưu & Phục Hồi Dữ Liệu</h3>
+              </div>
+              <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
+                Toàn bộ ngày giỗ, ghi chú và gia phả được lưu trên thiết bị này. Hãy sao lưu để cất giữ hoặc chuyển sang máy khác.
+              </p>
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn-outline-royal" onclick="exportBackupData()">
+                  <i class="fa-solid fa-file-export"></i> Xuất file Sao Lưu (JSON)
+                </button>
+                <button class="btn-outline-royal" onclick="openRestoreModal()">
+                  <i class="fa-solid fa-file-import"></i> Phục Hồi Dữ Liệu từ JSON
+                </button>
+                <button class="btn-gold" onclick="loadSampleDataConfirm()">
+                  <i class="fa-solid fa-arrows-rotate"></i> Khôi phục dữ liệu mẫu ban đầu
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- BOTTOM NAV (MOBILE) -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-inner">
+      <div class="bottom-nav-item active" onclick="switchTab('home')">
+        <i class="fa-solid fa-house"></i>
+        <span>Trang Chủ</span>
+      </div>
+      <div class="bottom-nav-item" onclick="switchTab('calendar')">
+        <i class="fa-solid fa-calendar-days"></i>
+        <span>Lịch Âm</span>
+      </div>
+      <div class="bottom-nav-item" onclick="switchTab('prayers')">
+        <i class="fa-solid fa-book-open"></i>
+        <span>Văn Khấn</span>
+      </div>
+      <div class="bottom-nav-item" onclick="switchTab('family')">
+        <i class="fa-solid fa-people-roof"></i>
+        <span>Gia Phả</span>
+      </div>
+      <div class="bottom-nav-item" onclick="switchTab('export')">
+        <i class="fa-solid fa-print"></i>
+        <span>Sổ Giỗ</span>
+      </div>
+      <div class="bottom-nav-item" onclick="switchTab('settings')">
+        <i class="fa-solid fa-gear"></i>
+        <span>Cài Đặt</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- FLOATING ACTION BUTTON (MOBILE) -->
+  <button class="fab-add-mobile" onclick="handleMobileAdd()" title="Thêm mục mới">
+    <i class="fa-solid fa-plus"></i>
+  </button>
+
+  <div class="modal-overlay" id="familyFormModal" role="dialog" aria-modal="true" aria-labelledby="familyFormTitle">
+    <div class="modal-dialog">
+      <div class="modal-header"><h3 id="familyFormTitle">Thêm người thân</h3><button class="modal-close-btn" onclick="closeModal('familyFormModal')" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="familyId">
+        <div class="form-group"><label for="familyName">Họ và tên *</label><input id="familyName" class="form-control" maxlength="120" placeholder="VD: Nguyễn Văn An"></div>
+        <div class="form-row">
+          <div class="form-group"><label for="familyGender">Giới tính</label><select id="familyGender" class="form-control"><option value="other">Chưa rõ</option><option value="male">Nam</option><option value="female">Nữ</option></select></div>
+          <div class="form-group"><label for="familyBranch">Nhánh gia đình</label><select id="familyBranch" class="form-control"><option value="noi">Bên nội</option><option value="ngoai">Bên ngoại</option><option value="khac">Nhánh khác</option></select></div>
+        </div>
+        <div class="family-form-heading">Ngày tháng <small>Có thể chỉ nhập năm nếu không nhớ ngày.</small></div>
+        <div class="form-row">
+          <div class="form-group"><label for="familyBirthDate">Ngày sinh</label><input id="familyBirthDate" class="form-control" inputmode="numeric" placeholder="1945 hoặc 12/08/1945"></div>
+          <div class="form-group"><label for="familyBirthCalendar">Loại lịch sinh</label><select id="familyBirthCalendar" class="form-control"><option value="solar">Dương lịch</option><option value="lunar">Âm lịch</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label for="familyDeathDate">Ngày mất</label><input id="familyDeathDate" class="form-control" inputmode="numeric" placeholder="2020 hoặc 15/03/2020"></div>
+          <div class="form-group"><label for="familyDeathCalendar">Loại lịch mất</label><select id="familyDeathCalendar" class="form-control"><option value="solar">Dương lịch</option><option value="lunar">Âm lịch</option></select></div>
+        </div>
+        <div class="family-form-heading">Quan hệ gia đình <small>Chọn người đã được thêm vào gia phả.</small></div>
+        <div class="form-row">
+          <div class="form-group"><label for="familyFather">Cha</label><select id="familyFather" class="form-control"></select></div>
+          <div class="form-group"><label for="familyMother">Mẹ</label><select id="familyMother" class="form-control"></select></div>
+        </div>
+        <div class="form-group"><label>Vợ / chồng</label><div id="familySpouses" class="family-spouse-choices"></div></div>
+        <div class="form-row">
+          <div class="form-group"><label for="familyHometown">Quê quán</label><input id="familyHometown" class="form-control" maxlength="180"></div>
+          <div class="form-group"><label for="familyRestingPlace">Nơi an nghỉ</label><input id="familyRestingPlace" class="form-control" maxlength="180"></div>
+        </div>
+        <div class="form-group"><label for="familyNotes">Ghi chép về người thân</label><textarea id="familyNotes" class="form-control" rows="3" maxlength="2000" placeholder="Kỷ niệm, tiểu sử, thông tin muốn lưu giữ..."></textarea></div>
+        <div id="familyFormError" class="family-form-error" role="alert"></div>
+      </div>
+      <div class="modal-footer"><button class="btn-outline-royal" onclick="closeModal('familyFormModal')">Hủy</button><button class="btn-royal" onclick="saveFamilyPerson()"><i class="fa-solid fa-check"></i> Lưu hồ sơ</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="familyDetailModal" role="dialog" aria-modal="true" aria-labelledby="familyDetailTitle">
+    <div class="modal-dialog">
+      <div class="modal-header"><h3 id="familyDetailTitle">Hồ sơ người thân</h3><button class="modal-close-btn" onclick="closeModal('familyDetailModal')" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="modal-body" id="familyDetailBody"></div>
+      <div class="modal-footer"><button class="btn-outline-royal" id="familyDeleteButton">Xóa</button><button class="btn-royal" id="familyEditButton"><i class="fa-solid fa-pen"></i> Sửa hồ sơ</button></div>
+    </div>
+  </div>
+
+  <!-- MODAL: THÊM / SỬA NGÀY GIỖ -->
+  <div class="modal-overlay" id="addEventModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="eventModalTitle"><i class="fa-solid fa-fire-flame-curved"></i> Thêm Ngày Giỗ Mới</h3>
+        <button class="modal-close-btn" onclick="closeModal('addEventModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalEventId">
+        <div class="form-group">
+          <label>Tiêu đề ngày giỗ / Sự kiện: *</label>
+          <input type="text" id="modalEventTitle" class="form-control" placeholder="VD: Giỗ Cụ Ông (Nội), Giỗ Bác Cả...">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Loại lịch:</label>
+            <select id="modalEventCalendar" class="form-control" onchange="toggleLeapMonthVisibility()">
+              <option value="lunar">Âm Lịch (Ngày Giỗ truyền thống)</option>
+              <option value="solar">Dương Lịch</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Phân loại sự kiện:</label>
+            <select id="modalEventType" class="form-control">
+              <option value="deathAnniversary">Ngày Giỗ</option>
+              <option value="birthday">Sinh Nhật</option>
+              <option value="memorial">Ngày Kỷ Niệm</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ngày (1 - 30/31): *</label>
+            <input type="number" id="modalEventDay" class="form-control" min="1" max="31" value="15">
+          </div>
+          <div class="form-group">
+            <label>Tháng (1 - 12): *</label>
+            <input type="number" id="modalEventMonth" class="form-control" min="1" max="12" value="8">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Năm mất (nếu nhớ):</label>
+            <input type="number" id="modalEventYear" class="form-control" placeholder="VD: 2012">
+          </div>
+          <div class="form-group">
+            <label>Hưởng thọ / Hưởng dương (tuổi):</label>
+            <input type="number" id="modalEventAge" class="form-control" placeholder="VD: 86">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Họ và tên người được tưởng nhớ:</label>
+          <input type="text" id="modalEventPerson" class="form-control" placeholder="VD: Lê Văn Phúc">
+        </div>
+        <div class="form-group">
+          <label>Mối quan hệ gia tộc:</label>
+          <input type="text" id="modalEventRelation" class="form-control" placeholder="VD: Cụ Ông (Nội), Cụ Bà (Ngoại), Bác cả...">
+        </div>
+        <div class="form-group">
+          <label>Nơi an nghỉ / Mộ phần:</label>
+          <input type="text" id="modalEventResting" class="form-control" placeholder="VD: Nghĩa trang quê nhà, Khu lăng mộ họ Lê...">
+        </div>
+        <div class="form-group">
+          <label>Ghi chú lễ tục / Món cúng cụ ưa thích:</label>
+          <textarea id="modalEventNotes" class="form-control" rows="2" placeholder="VD: Cụ thích ăn xôi gấc, canh măng miến..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-royal" onclick="closeModal('addEventModal')">Hủy</button>
+        <button class="btn-royal" onclick="saveEventItem()">Lưu Ngày Giỗ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CHI TIẾT SỰ KIỆN & MÂM CỖ, THU CHI -->
+  <div class="modal-overlay" id="eventDetailModal">
+    <div class="modal-dialog" style="max-width:700px;">
+      <div class="modal-header">
+        <h3 id="detailModalTitle"><i class="fa-solid fa-circle-info"></i> Chi Tiết Ngày Giỗ</h3>
+        <button class="modal-close-btn" onclick="closeModal('eventDetailModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="detailModalBody">
+        <!-- Render động -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-royal" style="color:#D32F2F; border-color:#D32F2F;" onclick="deleteCurrentDetailEvent()">
+          <i class="fa-solid fa-trash"></i> Xóa
+        </button>
+        <button class="btn-outline-royal" onclick="editCurrentDetailEvent()">
+          <i class="fa-solid fa-pen-to-square"></i> Chỉnh Sửa
+        </button>
+        <button class="btn-royal" onclick="openPrayerForCurrentEvent()">
+          <i class="fa-solid fa-book-open"></i> Đọc Văn Khấn
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ĐỌC VĂN KHẤN TOÀN MÀN HÌNH -->
+  <div class="modal-overlay prayer-reader-modal" id="prayerReaderModal">
+    <div class="modal-dialog">
+      <div class="modal-header" style="background:linear-gradient(135deg, #7A180B 0%, #580E04 100%); color:#FFF;">
+        <h3 id="readerTitle" style="color:var(--gold-light); font-size:17px;"><i class="fa-solid fa-scroll"></i> Bài Văn Khấn</h3>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="theme-toggle-btn" style="color:#FFF;" onclick="playTempleBell()" title="Thỉnh chuông đồng">
+            <i class="fa-solid fa-bell"></i>
+          </button>
+          <button class="theme-toggle-btn" style="color:#FFF;" onclick="adjustReaderFont(-2)" title="Giảm cỡ chữ">
+            <i class="fa-solid fa-font" style="font-size:10px;"></i>-
+          </button>
+          <button class="theme-toggle-btn" style="color:#FFF;" onclick="adjustReaderFont(2)" title="Tăng cỡ chữ">
+            <i class="fa-solid fa-font" style="font-size:14px;"></i>+
+          </button>
+          <button class="modal-close-btn" style="color:#FFF;" onclick="closeModal('prayerReaderModal')">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div id="readerBanner" style="margin-bottom:14px; padding:10px 14px; background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.4); border-radius:var(--radius-md); font-size:12.5px;">
+          <!-- Tín chủ & Ngày âm -->
+        </div>
+        <div class="prayer-reader-content" id="readerContent">
+          <!-- Nội dung văn khấn -->
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:space-between;">
+        <button class="btn-outline-royal" onclick="copyPrayerContent()">
+          <i class="fa-solid fa-copy"></i> Sao chép bài cúng
+        </button>
+        <button class="btn-royal" onclick="closeModal('prayerReaderModal')">
+          Đã Cúng Xong (Đóng)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: GHI CHÚ THEO NGÀY -->
+  <div class="modal-overlay" id="addNoteModal">
+    <div class="modal-dialog" style="max-width:480px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-pen-nib"></i> Thêm Việc Cần Nhớ</h3>
+        <button class="modal-close-btn" onclick="closeModal('addNoteModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalNoteId">
+        <div class="form-group">
+          <label>Nội dung việc cần nhớ: *</label>
+          <input type="text" id="modalNoteTitle" class="form-control" placeholder="VD: Mua xôi gà, báo các cô chú ở xa...">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Ngày thực hiện:</label>
+            <input type="date" id="modalNoteDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Phân loại:</label>
+            <select id="modalNoteCategory" class="form-control">
+              <option value="offering">Đồ cúng / Mâm cỗ</option>
+              <option value="family">Việc họ / Gia đình</option>
+              <option value="todo" selected>Việc cần làm</option>
+              <option value="general">Ghi nhớ chung</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Giờ hẹn (nếu có):</label>
+          <input type="time" id="modalNoteTime" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-outline-royal" onclick="closeModal('addNoteModal')">Hủy</button>
+        <button class="btn-royal" onclick="saveNoteItem()">Lưu Việc Cần Nhớ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ĐỔI LỊCH NHANH ÂM - DƯƠNG -->
+  <div class="modal-overlay" id="quickConverterModal">
+    <div class="modal-dialog" style="max-width:440px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-right-left"></i> Tra Cứu Âm Dương Vạn Niên</h3>
+        <button class="modal-close-btn" onclick="closeModal('quickConverterModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label>Ngày Dương:</label>
+            <input type="number" id="convDay" class="form-control" min="1" max="31">
+          </div>
+          <div class="form-group">
+            <label>Tháng Dương:</label>
+            <input type="number" id="convMonth" class="form-control" min="1" max="12">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Năm Dương:</label>
+          <input type="number" id="convYear" class="form-control" min="1900" max="2100">
+        </div>
+        <button class="btn-royal" style="width:100%; margin-bottom:16px;" onclick="calculateQuickConversion()">
+          <i class="fa-solid fa-magnifying-glass"></i> Tra Cứu Ngay
+        </button>
+        <div id="convResultBox" style="display:none; padding:16px; background:var(--bg-paper); border-radius:var(--radius-md); border:1px solid var(--gold); text-align:center;">
+          <!-- Kết quả -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL QUÉT QR MỞ TRÊN ĐIỆN THOẠI -->
+  <div class="modal-overlay" id="qrModal">
+    <div class="modal-dialog" style="max-width:440px; text-align:center;">
+      <div class="modal-header">
+        <h3 style="margin:0 auto; font-family:'Playfair Display', serif; color:var(--primary);"><i class="fa-solid fa-qrcode"></i> Trải Nghiệm Trên Điện Thoại</h3>
+        <button class="modal-close-btn" onclick="closeModal('qrModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" style="padding-top:10px;">
+        <p style="font-size:14px; color:var(--text-sub); margin-bottom:15px;">
+          Quét mã bằng Camera (iPhone/iPad) hoặc Zalo/Google Lens (Android) khi kết nối chung mạng WiFi:
+        </p>
+        <div style="background:white; padding:16px; border-radius:12px; display:inline-block; border:2px solid var(--gold); box-shadow:0 4px 15px rgba(0,0,0,0.08); margin-bottom:15px;">
+          <img src="qr_app.png" alt="QR Code So Gio Gia Toc" style="width:200px; height:200px; display:block;">
+        </div>
+        <div style="font-size:13px; font-weight:600; color:var(--primary); background:rgba(139,30,15,0.06); padding:8px 12px; border-radius:8px; margin-bottom:15px; word-break:break-all;">
+          🔗 Link: <a href="http://10.43.130.9:8088/" target="_blank" style="color:var(--primary); text-decoration:underline;">http://10.43.130.9:8088/</a>
+        </div>
+        <div style="text-align:left; font-size:13px; line-height:1.6; background:var(--bg-paper); padding:12px; border-radius:8px; border-left:3px solid var(--primary);">
+          <div style="font-weight:bold; margin-bottom:4px; color:var(--text-main);"><i class="fa-brands fa-apple"></i> Dành cho iOS (iPhone/iPad):</div>
+          Mở Safari &rarr; Truy cập link &rarr; Bấm nút <b>Chia sẻ</b> (<i class="fa-solid fa-arrow-up-from-bracket"></i>) &rarr; Chọn <b>"Thêm vào Màn hình chính" (Add to Home Screen)</b>. App sẽ mở toàn màn hình, mượt mà như app gốc từ App Store!<br><br>
+          <div style="font-weight:bold; margin-bottom:4px; color:var(--text-main);"><i class="fa-brands fa-android"></i> Dành cho Android:</div>
+          Mở Chrome &rarr; Bấm Menu dấu 3 chấm &rarr; Chọn <b>"Cài đặt ứng dụng"</b> hoặc tải trực tiếp file APK: <a href="So_Gio_Gia_Toc.apk" download style="color:#b22222; font-weight:bold;">Tải So_Gio_Gia_Toc.apk</a>.
+        </div>
+      </div>
+      <div class="modal-footer" style="justify-content:center; padding-top:10px;">
+        <button class="btn-royal" onclick="closeModal('qrModal')">Đóng cửa sổ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT: THUẬT TOÁN ÂM LỊCH HOÀNG GIA & DỮ LIỆU CỐT LÕI -->
+  <script>
+    /* ========================================================
+       1. THUẬT TOÁN ÂM LỊCH VIỆT NAM (TS. HỒ NGỌC ĐỨC GMT+7)
+       ======================================================== */
+    const CAN = ['Giáp', 'Ất', 'Bính', 'Đinh', 'Mậu', 'Kỷ', 'Canh', 'Tân', 'Nhâm', 'Quý'];
+    const CHI = ['Tý', 'Sửu', 'Dần', 'Mão', 'Thìn', 'Tỵ', 'Ngọ', 'Mùi', 'Thân', 'Dậu', 'Tuất', 'Hợi'];
+    const SOLAR_TERMS = [
+      'Xuân Phân', 'Thanh Minh', 'Cốc Vũ', 'Lập Hạ', 'Tiểu Mãn', 'Mang Chủng',
+      'Hạ Chí', 'Tiểu Thử', 'Đại Thử', 'Lập Thu', 'Xử Thử', 'Bạch Lộ',
+      'Thu Phân', 'Hàn Lộ', 'Sương Giáng', 'Lập Đông', 'Tiểu Tuyết', 'Đại Tuyết',
+      'Đông Chí', 'Tiểu Hàn', 'Đại Hàn', 'Lập Xuân', 'Vũ Thủy', 'Kinh Trập'
+    ];
+
+    function jdFromDate(d, m, y) {
+      const a = Math.floor((14 - m) / 12);
+      const yy = y + 4800 - a;
+      const mm = m + 12 * a - 3;
+      return d + Math.floor((153 * mm + 2) / 5) + 365 * yy + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045;
+    }
+
+    function jdToDate(jd) {
+      const a = jd + 32044;
+      const b = Math.floor((4 * a + 3) / 146097);
+      const c = a - Math.floor((146097 * b) / 4);
+      const d = Math.floor((4 * c + 3) / 1461);
+      const e = c - Math.floor((1461 * d) / 4);
+      const m = Math.floor((5 * e + 2) / 153);
+      const day = e - Math.floor((153 * m + 2) / 5) + 1;
+      const month = m + 3 - 12 * Math.floor(m / 10);
+      const year = 100 * b + d - 4800 + Math.floor(m / 10);
+      return [day, month, year];
+    }
+
+    function getNewMoonDay(k, timezone = 7.0) {
+      const t = k / 1236.85;
+      const t2 = t * t;
+      const t3 = t2 * t;
+      const jd1 = 2415020.75933 + 29.53058868 * k + 0.0001178 * t2 - 0.000000155 * t3;
+
+      const m = (359.2242 + 29.10535608 * k - 0.0000333 * t2 - 0.00000347 * t3) * Math.PI / 180.0;
+      const mprime = (306.0253 + 385.81691806 * k + 0.0107306 * t2 + 0.00001236 * t3) * Math.PI / 180.0;
+      const f = (21.2964 + 390.67050646 * k - 0.0016528 * t2 - 0.00000239 * t3) * Math.PI / 180.0;
+
+      const deltaJd = (0.1734 - 0.000393 * t) * Math.sin(m) +
+          0.0021 * Math.sin(2 * m) -
+          0.4068 * Math.sin(mprime) +
+          0.0161 * Math.sin(2 * mprime) -
+          0.0004 * Math.sin(3 * mprime) +
+          0.0104 * Math.sin(2 * f) -
+          0.0051 * Math.sin(m + mprime) -
+          0.0074 * Math.sin(m - mprime) +
+          0.0004 * Math.sin(2 * f + m) -
+          0.0004 * Math.sin(2 * f - m) -
+          0.0006 * Math.sin(2 * f + mprime) +
+          0.0100 * Math.sin(2 * f - mprime) +
+          0.0005 * Math.sin(m + 2 * mprime);
+
+      const jd = jd1 + deltaJd;
+      return Math.floor(jd + 0.5 + timezone / 24.0);
+    }
+
+    function getSunLongitude(jdn, timezone = 7.0) {
+      const t = (jdn - 0.5 - timezone / 24.0 - 2451545.0) / 36525.0;
+      const dr = Math.PI / 180.0;
+      const l0 = 280.46645 + 36000.76983 * t + 0.0003032 * t * t;
+      const m = 357.52910 + 35999.05030 * t - 0.0001559 * t * t - 0.00000048 * t * t * t;
+      const c = (1.914600 - 0.004817 * t - 0.000014 * t * t) * Math.sin(m * dr) +
+          (0.019993 - 0.000101 * t) * Math.sin(2 * m * dr) +
+          0.000290 * Math.sin(3 * m * dr);
+
+      let theta = (l0 + c) % 360.0;
+      if (theta < 0) theta += 360.0;
+      return Math.floor(theta / 30.0);
+    }
+
+    function getLunarMonth11(year, timezone = 7.0) {
+      const off = jdFromDate(31, 12, year) - 2415021;
+      const k = Math.floor(off / 29.530588853);
+      let nm = getNewMoonDay(k, timezone);
+      const sunLong = getSunLongitude(nm, timezone);
+      if (sunLong >= 9) {
+        nm = getNewMoonDay(k - 1, timezone);
+      }
+      return nm;
+    }
+
+    function getLeapMonthOffset(a11, timezone = 7.0) {
+      const k = Math.floor((a11 - 2415021.076998695) / 29.530588853 + 0.5);
+      let last = 0;
+      let i = 1;
+      let arc = getSunLongitude(getNewMoonDay(k + i, timezone), timezone);
+      while (true) {
+        last = arc;
+        i += 1;
+        arc = getSunLongitude(getNewMoonDay(k + i, timezone), timezone);
+        if (arc === last || i >= 14) break;
+      }
+      return i - 1;
+    }
+
+    function solarToLunar(d, m, y, timezone = 7.0) {
+      const dayNumber = jdFromDate(d, m, y);
+      const k = Math.floor((dayNumber - 2415021.076998695) / 29.530588853);
+      let monthStart = getNewMoonDay(k + 1, timezone);
+      if (monthStart > dayNumber) {
+        monthStart = getNewMoonDay(k, timezone);
+      }
+
+      let a11 = getLunarMonth11(y, timezone);
+      let b11 = a11;
+      let lunarYear;
+      if (a11 >= monthStart) {
+        lunarYear = y;
+        a11 = getLunarMonth11(y - 1, timezone);
+      } else {
+        lunarYear = y + 1;
+        b11 = getLunarMonth11(y + 1, timezone);
+      }
+
+      const lunarDay = dayNumber - monthStart + 1;
+      const diff = Math.floor((monthStart - a11) / 29.0);
+      let lunarLeap = 0;
+      let lunarMonth = diff + 11;
+
+      if ((b11 - a11) > 365) {
+        const leapOff = getLeapMonthOffset(a11, timezone);
+        let leapMonth = leapOff - 2;
+        if (leapMonth < 0) leapMonth += 12;
+        if (diff >= leapOff) {
+          lunarMonth = diff + 10;
+          if (diff === leapOff) lunarLeap = 1;
+        }
+      }
+
+      if (lunarMonth > 12) lunarMonth -= 12;
+      if (lunarMonth >= 11 && diff < 4) lunarYear -= 1;
+
+      return {
+        day: lunarDay,
+        month: lunarMonth,
+        year: lunarYear,
+        isLeap: lunarLeap === 1,
+        jd: dayNumber
+      };
+    }
+
+    function lunarToSolar(lunarDay, lunarMonth, lunarYear, isLeap = false, timezone = 7.0) {
+      let a11, b11;
+      if (lunarMonth < 11) {
+        a11 = getLunarMonth11(lunarYear - 1, timezone);
+        b11 = getLunarMonth11(lunarYear, timezone);
+      } else {
+        a11 = getLunarMonth11(lunarYear, timezone);
+        b11 = getLunarMonth11(lunarYear + 1, timezone);
+      }
+
+      const k = Math.floor((a11 - 2415021.076998695) / 29.530588853 + 0.5);
+      let off = lunarMonth - 11;
+      if (off < 0) off += 12;
+
+      if ((b11 - a11) > 365) {
+        const leapOff = getLeapMonthOffset(a11, timezone);
+        let leapMonth = leapOff - 2;
+        if (leapMonth < 0) leapMonth += 12;
+        if (isLeap && (lunarMonth !== leapMonth)) return null;
+        if ((off >= leapOff - 1) || isLeap) off += 1;
+      }
+
+      const monthStart = getNewMoonDay(k + off, timezone);
+      return jdToDate(monthStart + lunarDay - 1);
+    }
+
+    function getLunarMonthDays(lunarMonth, lunarYear) {
+      const res30 = lunarToSolar(30, lunarMonth, lunarYear, false);
+      if (res30) {
+        const back = solarToLunar(res30[0], res30[1], res30[2]);
+        if (back.month === lunarMonth && back.day === 30) return 30;
+      }
+      return 29;
+    }
+
+    function getCanChiYear(lunarYear) {
+      return `${CAN[(lunarYear + 6) % 10]} ${CHI[(lunarYear + 8) % 12]}`;
+    }
+
+    function getCanChiDay(jd) {
+      return `${CAN[(jd + 9) % 10]} ${CHI[(jd + 1) % 12]}`;
+    }
+
+    function getSolarTerm(d, m, y) {
+      const jd = jdFromDate(d, m, y);
+      const t = (jd - 0.5 - 7.0 / 24.0 - 2451545.0) / 36525.0;
+      const dr = Math.PI / 180.0;
+      const l0 = 280.46645 + 36000.76983 * t;
+      const ma = 357.52910 + 35999.05030 * t;
+      const c = 1.914600 * Math.sin(ma * dr);
+      let theta = (l0 + c) % 360.0;
+      if (theta < 0) theta += 360.0;
+      const idx = Math.floor(theta / 15.0) % 24;
+      return SOLAR_TERMS[idx];
+    }
+
+    function isHoangDaoDay(jd, lunarMonth) {
+      const monthChi = (lunarMonth + 1) % 12;
+      const dayChi = (jd + 1) % 12;
+      const offset = (dayChi - monthChi + 12) % 12;
+      return [0, 1, 4, 6, 8, 10].includes(offset);
+    }
+
+    function getHoangDaoHours(jd) {
+      const dayChiIndex = (jd + 1) % 12;
+      let indices = [];
+      if (dayChiIndex === 2 || dayChiIndex === 8) {
+        indices = [0, 1, 4, 5, 7, 10]; // Dần, Thân
+      } else if (dayChiIndex === 3 || dayChiIndex === 9) {
+        indices = [0, 2, 3, 6, 7, 9]; // Mão, Dậu
+      } else if (dayChiIndex === 4 || dayChiIndex === 10) {
+        indices = [2, 4, 5, 8, 9, 11]; // Thìn, Tuất
+      } else if (dayChiIndex === 5 || dayChiIndex === 11) {
+        indices = [1, 4, 6, 7, 10, 11]; // Tỵ, Hợi
+      } else if (dayChiIndex === 0 || dayChiIndex === 6) {
+        indices = [0, 1, 3, 6, 8, 9]; // Tý, Ngọ
+      } else {
+        indices = [2, 3, 5, 8, 10, 11]; // Sửu, Mùi
+      }
+      const times = [
+        'Tý (23h-01h)', 'Sửu (01h-03h)', 'Dần (03h-05h)', 'Mão (05h-07h)',
+        'Thìn (07h-09h)', 'Tỵ (09h-11h)', 'Ngọ (11h-13h)', 'Mùi (13h-15h)',
+        'Thân (15h-17h)', 'Dậu (17h-19h)', 'Tuất (19h-21h)', 'Hợi (21h-23h)'
+      ];
+      return indices.map(i => times[i]);
+    }
+
+    /* Tính ngày giỗ tiếp theo */
+    function calculateNextOccurrence(event, fromDate = new Date()) {
+      const today = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+      
+      if (event.calendar === 'lunar') {
+        const curYear = today.getFullYear();
+        for (const yearCand of [curYear, curYear + 1]) {
+          const maxDays = getLunarMonthDays(event.month, yearCand);
+          const targetDay = Math.min(event.day, maxDays);
+          const res = lunarToSolar(targetDay, event.month, yearCand, false);
+          if (res) {
+            const solarDate = new Date(res[2], res[1] - 1, res[0]);
+            if (solarDate >= today) {
+              const diffTime = solarDate.getTime() - today.getTime();
+              const daysRemaining = Math.round(diffTime / (1000 * 3600 * 24));
+              const tienThuong = new Date(solarDate);
+              tienThuong.setDate(solarDate.getDate() - 1);
+              let anniversary = null;
+              if (event.year && yearCand >= event.year) {
+                anniversary = yearCand - event.year;
+              }
+              return {
+                event,
+                nextSolarDate: solarDate,
+                tienThuongDate: tienThuong,
+                daysRemaining,
+                adjustedDay: targetDay,
+                anniversaryCount: anniversary,
+                canChiYear: getCanChiYear(yearCand)
+              };
+            }
+          }
+        }
+      } else {
+        const curYear = today.getFullYear();
+        let candidate = new Date(curYear, event.month - 1, event.day);
+        if (candidate < today) {
+          candidate = new Date(curYear + 1, event.month - 1, event.day);
+        }
+        const diffTime = candidate.getTime() - today.getTime();
+        const daysRemaining = Math.round(diffTime / (1000 * 3600 * 24));
+        let anniversary = null;
+        if (event.year && candidate.getFullYear() >= event.year) {
+          anniversary = candidate.getFullYear() - event.year;
+        }
+        return {
+          event,
+          nextSolarDate: candidate,
+          tienThuongDate: new Date(candidate.getTime() - 86400000),
+          daysRemaining,
+          adjustedDay: event.day,
+          anniversaryCount: anniversary
+        };
+      }
+      return null;
+    }
+
+    /* ========================================================
+       2. KHO VĂN KHẤN CỔ TRUYỀN (CHUẨN BẢN SẮC VIỆT NAM)
+       ======================================================== */
+    const PRAYERS_DATA = [
+      {
+        id: 'gio_chinh_ky',
+        title: 'Văn Khấn Lễ Chính Kỵ (Cúng Đúng Ngày Giỗ)',
+        category: 'gio',
+        occasion: 'Cúng vào buổi sáng (8h - 11h) đúng ngày giỗ của người quá cố.',
+        offerings: ['Mâm cỗ mặn (gà luộc, xôi gấc, canh măng, miến, nem rán)', 'Hương hoa tươi, trầu cau, quả ngọt, rượu, nước trong', 'Vàng mã gia tiên'],
+        content: `Nam mô A Di Đà Phật! (3 lần, 3 lạy)
+
+Con lạy chín phương Trời, mười phương Chư Phật, Chư Phật mười phương.
+Con kính lạy Hoàng thiên Hậu Thổ chư vị Tôn thần.
+Con kính lạy ngài Đông Trù Tư mệnh Táo phủ Thần quân.
+Con kính lạy Thần linh, Thổ địa cai quản trong xứ này.
+Con kính lạy Tổ Tiên nội ngoại chư vị Hương linh.
+
+Tín chủ con là: {gia_chu}
+Ngụ tại: {dia_chi}
+
+Hôm nay là ngày {ngay_am}, chính là ngày Chính kỵ của {quan_he} {nguoi_mat}.
+Thiết nghĩ {quan_he} vắng bóng trần gian, vĩnh biệt cõi dương, nay đến ngày kỷ niệm, tưởng nhớ khôn nguôi.
+Chính trực sinh thời có đức cao dày, con cháu khôn lớn nhớ ơn dưỡng dục.
+
+Nay lòng thành kính cẩn, chúng con dâng mâm cỗ phẩm vật thanh tịnh, giọt rượu hương thơm, kính mời:
+Chân linh {quan_he} {nguoi_mat} giáng lâm trước án, thụ hưởng lễ vật, chứng giám lòng thành.
+
+Lại kính thỉnh chư vị Tổ Bá, Tổ Thúc, Tổ Cô và các chân linh tiền tổ nội ngoại cùng về hâm hưởng.
+Cúi xin phù hộ độ trì cho toàn gia quyến: già trẻ bình an, con cháu hiếu thảo, đỗ đạt công danh, tài lộc dồi dào, bốn mùa không điều trắc trở.
+
+Lòng thành kính cẩn, cúi xin chứng giám!
+Nam mô A Di Đà Phật! (3 lần, 3 lạy)`
+      },
+      {
+        id: 'gio_tien_thuong',
+        title: 'Văn Khấn Lễ Tiên Thường (Cúng Chiều Hôm Trước Giỗ)',
+        category: 'gio',
+        occasion: 'Cúng vào buổi chiều ngày hôm trước ngày giỗ chính để cáo thỉnh hương linh về ngự.',
+        offerings: ['Mâm cơm gia đình giản dị hoặc cỗ chay thanh tịnh', 'Hương hoa, trầu cau, trà, nước', 'Vàng mã cúng Tiên thường'],
+        content: `Nam mô A Di Đà Phật! (3 lần, 3 lạy)
+
+Con lạy chín phương Trời, mười phương Chư Phật, Chư Phật mười phương.
+Con kính lạy Hoàng thiên Hậu Thổ chư vị Tôn thần.
+Con kính lạy Bản gia Thổ công, Thổ địa tôn thần.
+Con kính lạy Tổ Tiên nội ngoại chư vị Hương linh.
+
+Tín chủ con là: {gia_chu}
+Ngụ tại: {dia_chi}
+
+Hôm nay là chiều ngày hôm trước ngày giỗ, tín chủ con thiết lễ Tiên thường.
+Ngày mai là ngày Chính kỵ của {quan_he} {nguoi_mat}.
+
+Nghĩ đến công đức sinh thành dưỡng dục vô biên, con cháu một dạ thành tâm kính nhớ. Nay dâng lễ vật, hương hoa phù tửu, lòng thành thắp nén tâm hương.
+Kính mời chân linh {quan_he} {nguoi_mat} cùng chư vị Hương linh tiền tổ nội ngoại giáng phó từ đường, thụ hưởng lễ vật, phù hộ độ trì cho gia đạo hưng long, vạn sự cát tường.
+
+Dãi tấm lòng thành, cúi xin chứng giám!
+Nam mô A Di Đà Phật! (3 lần, 3 lạy)`
+      },
+      {
+        id: 'ram_mung_mot',
+        title: 'Văn Khấn Ngày Rằm (15) & Mùng 1 Hàng Tháng',
+        category: 'ram_mung_mot',
+        occasion: 'Cúng gia tiên và thần linh vào ngày mùng 1 đầu tháng và ngày Rằm trăng tròn.',
+        offerings: ['Hoa tươi, trầu cau, ngũ quả', 'Nước trong, trà, nến/đèn dầu', 'Mâm lễ chay hoặc mặn tùy tâm'],
+        content: `Nam mô A Di Đà Phật! (3 lần, 3 lạy)
+
+Con lạy chín phương Trời, mười phương Chư Phật, Chư Phật mười phương.
+Con kính lạy Hoàng thiên Hậu Thổ chư vị Tôn thần.
+Con kính lạy ngài Đông Trù Tư mệnh Táo phủ Thần quân.
+Con kính lạy Thần linh cai quản trong xứ này.
+Con kính lạy chư vị Hương linh tiền tổ nội ngoại.
+
+Tín chủ con là: {gia_chu}
+Ngụ tại: {dia_chi}
+
+Hôm nay là ngày {ngay_am}.
+Tín chủ con thành tâm sắm lễ, hương hoa trà quả, đốt nén tâm hương, dâng lên trước án.
+Chúng con kính thỉnh chư vị Thần linh giáng lâm trước án, chứng giám lòng thành, thụ hưởng lễ vật.
+Kính rước Tiên tổ nội ngoại thương xót con cháu, độ trì cho gia đình chúng con được bình an, mạnh khỏe, công việc hanh thông, mọi sự tốt lành.
+
+Nam mô A Di Đà Phật! (3 lần, 3 lạy)`
+      },
+      {
+        id: 'cung_ong_tao',
+        title: 'Văn Khấn Cúng Ông Công Ông Táo (23 Tháng Chạp)',
+        category: 'tet',
+        occasion: 'Cúng vào ngày 23 tháng Chạp để tiễn Táo quân chầu trời báo cáo công việc gia đình.',
+        offerings: ['3 bộ mũ áo Táo quân (2 nam 1 nữ) và vàng thỏi', '3 con cá chép đỏ sống thả vào chậu nước (sau cúng phóng sinh)', 'Mâm cỗ mặn hoặc mâm cỗ chay thanh tịnh'],
+        content: `Nam mô A Di Đà Phật! (3 lần, 3 lạy)
+
+Con lạy chín phương Trời, mười phương Chư Phật, Chư Phật mười phương.
+Con kính lạy ngài Đông Trù Tư mệnh Táo phủ Thần quân.
+
+Tín chủ con là: {gia_chu}
+Ngụ tại: {dia_chi}
+
+Hôm nay là ngày 23 tháng Chạp năm {nam_am}.
+Tín chủ con thành tâm sửa biện hương hoa phẩm vật, xiêm hài áo mũ, kính dâng Tôn thần. Thắp nén tâm hương tín chủ con thành tâm kính bái.
+Kính mời ngài Đông Trù Tư mệnh Táo phủ Thần quân giáng lâm trước án thụ hưởng lễ vật.
+
+Cúi xin Tôn thần gia ân xá tội cho mọi lỗi lầm trong năm qua gia chủ con mắc phải. Cầu xin Tôn thần thăng thiên tâu bày việc lành, ban phúc ban lộc cho toàn gia an khang thịnh vượng!
+Dãi tấm lòng thành, cúi xin chứng giám!
+
+Nam mô A Di Đà Phật! (3 lần, 3 lạy)`
+      },
+      {
+        id: 'cung_tat_nien',
+        title: 'Văn Khấn Lễ Cúng Tất Niên Chiều 30 Tết',
+        category: 'tet',
+        occasion: 'Cúng vào chiều 30 Tết để tạ ơn trời đất, thần linh và rước gia tiên về ăn Tết cùng con cháu.',
+        offerings: ['Mâm cỗ thịnh soạn ngày Tết (bánh chưng, gà, giò, nem...)', 'Mâm ngũ quả, hoa cúc/đào/mai, trà, rượu, trầu cau'],
+        content: `Nam mô A Di Đà Phật! (3 lần, 3 lạy)
+
+Con lạy chín phương Trời, mười phương Chư Phật.
+Con kính lạy Hoàng thiên Hậu thổ chư vị Tôn thần.
+Con kính lạy Bản xứ Thần linh Thổ địa tôn thần.
+Con kính lạy Tiên tổ nội ngoại gia tiên họ...
+
+Tín chủ con là: {gia_chu}
+Ngụ tại: {dia_chi}
+
+Hôm nay là chiều 30 Tết năm {nam_am}.
+Trước phút giao thừa sum họp, con cháu tề tựu đông đủ, sắm sửa mâm cỗ thanh bông hoa quả kính dâng lên án.
+Kính cẩn thỉnh mời chư vị Tôn thần, tiền tổ nội ngoại chứng giám lòng thành, thụ hưởng lễ vật.
+Cúi xin phù hộ cho toàn thể gia quyến năm mới dồi dào sức khỏe, vạn sự hanh thông, phúc lộc song toàn!
+
+Nam mô A Di Đà Phật! (3 lần, 3 lạy)`
+      }
+    ];
+
+    /* ========================================================
+       3. QUẢN LÝ DỮ LIỆU LOCALSTORAGE (TƯƠNG THÍCH VỚI FLUTTER)
+       ======================================================== */
+    const STORAGE_KEY_EVENTS = 'app_events_json';
+    const STORAGE_KEY_NOTES = 'app_daily_notes_json';
+    const STORAGE_KEY_PROFILE = 'app_profile_json';
+    const STORAGE_KEY_FAMILY = 'app_family_people_json';
+
+    let appEvents = [];
+    let appNotes = [];
+    let appFamily = [];
+    let appProfile = {
+      giaChu: 'Lê Đức Anh',
+      diaChi: 'Số 12, Trần Phú, TP Hà Tĩnh',
+      prayerFontSize: 19,
+      isDarkMode: false
+    };
+
+    function loadInitialData() {
+      try {
+        const evStr = localStorage.getItem(STORAGE_KEY_EVENTS);
+        if (evStr) {
+          appEvents = JSON.parse(evStr);
+        } else {
+          appEvents = getSampleEvents();
+          saveEvents();
+        }
+
+        const noteStr = localStorage.getItem(STORAGE_KEY_NOTES);
+        if (noteStr) {
+          appNotes = JSON.parse(noteStr);
+        } else {
+          appNotes = getSampleNotes();
+          saveNotes();
+        }
+
+        const profStr = localStorage.getItem(STORAGE_KEY_PROFILE);
+        if (profStr) {
+          appProfile = JSON.parse(profStr);
+        }
+        const familyStr = localStorage.getItem(STORAGE_KEY_FAMILY);
+        if (familyStr) appFamily = JSON.parse(familyStr);
+      } catch (e) {
+        console.error("Lỗi đọc dữ liệu:", e);
+        appEvents = getSampleEvents();
+        appNotes = getSampleNotes();
+      }
+
+      // Khởi tạo UI
+      if (appProfile.isDarkMode) {
+        document.body.setAttribute('data-theme', 'dark');
+        document.getElementById('themeIcon').className = 'fa-solid fa-sun';
+        const mobIcon = document.getElementById('mobileThemeIcon');
+        if (mobIcon) mobIcon.className = 'fa-solid fa-sun';
+      }
+      document.getElementById('sidebarGiaChuName').innerText = appProfile.giaChu || 'Gia tộc Việt Nam';
+      document.getElementById('sidebarDiaChi').innerText = appProfile.diaChi || 'Việt Nam';
+      document.getElementById('settingGiaChu').value = appProfile.giaChu || '';
+      document.getElementById('settingDiaChi').value = appProfile.diaChi || '';
+      document.getElementById('settingFontSize').value = appProfile.prayerFontSize || 19;
+    }
+
+    function saveEvents() {
+      localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(appEvents));
+      document.getElementById('sidebarEventCount').innerText = appEvents.length;
+    }
+
+    function saveNotes() {
+      localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(appNotes));
+    }
+
+    function saveProfile() {
+      localStorage.setItem(STORAGE_KEY_PROFILE, JSON.stringify(appProfile));
+    }
+
+    function getSampleEvents() {
+      return [
+        {
+          id: 'sample_1',
+          title: 'Giỗ Cụ Ông (Nội)',
+          type: 'deathAnniversary',
+          calendar: 'lunar',
+          day: 15,
+          month: 8,
+          year: 2012,
+          personName: 'Lê Văn Phúc',
+          relation: 'Cụ Ông (Nội)',
+          restingPlace: 'Khu lăng mộ họ Lê, Nghĩa trang Quê nhà',
+          ageAtDeath: 86,
+          notes: 'Cụ thích ăn xôi gấc và canh măng miến. Báo cô chú ở xa trước 3 ngày.',
+          dishes: ['Gà luộc lá chanh', 'Xôi gấc đỏ', 'Canh măng miến', 'Giò lụa', 'Nem rán truyền thống'],
+          contributions: [
+            { id: 'c1', memberName: 'Anh Đức Anh', amount: 2000000, note: 'Góp mua vàng mã & cỗ' },
+            { id: 'c2', memberName: 'Cô Lan', amount: 1000000, note: 'Mua hoa quả' }
+          ]
+        },
+        {
+          id: 'sample_2',
+          title: 'Giỗ Cụ Bà (Nội)',
+          type: 'deathAnniversary',
+          calendar: 'lunar',
+          day: 12,
+          month: 2,
+          year: 2016,
+          personName: 'Trần Thị Mơ',
+          relation: 'Cụ Bà (Nội)',
+          restingPlace: 'Khu lăng mộ họ Lê',
+          ageAtDeath: 82,
+          notes: 'Cúng giỗ thanh tịnh mâm cỗ chay thanh tao.',
+          dishes: ['Xôi vò hạt sen', 'Nem chay hoa chuối', 'Canh nấm ngũ sắc'],
+          contributions: []
+        },
+        {
+          id: 'sample_3',
+          title: 'Giỗ Bác Cả',
+          type: 'deathAnniversary',
+          calendar: 'lunar',
+          day: 20,
+          month: 10,
+          year: 2021,
+          personName: 'Lê Văn Dũng',
+          relation: 'Bác Cả',
+          restingPlace: 'Nghĩa trang thành phố',
+          ageAtDeath: 65,
+          notes: 'Tập trung con cháu tại nhà thờ chi 1.',
+          dishes: ['Bánh chưng', 'Thịt quay', 'Canh mọc'],
+          contributions: []
+        }
+      ];
+    }
+
+    function getSampleNotes() {
+      const now = new Date();
+      return [
+        {
+          id: 'n1',
+          title: 'Đặt gà đồi & xôi gấc cúng rằm',
+          date: now.toISOString().split('T')[0],
+          category: 'offering',
+          isCompleted: false,
+          time: '08:00'
+        },
+        {
+          id: 'n2',
+          title: 'Gửi danh sách ngày giỗ vào nhóm Zalo họ tộc',
+          date: now.toISOString().split('T')[0],
+          category: 'family',
+          isCompleted: true,
+          time: '19:30'
+        }
+      ];
+    }
+
+    /* ========================================================
+       4. ÂM THANH CHUÔNG ĐỒNG GIA TIÊN (WEB AUDIO SYNTHESIS)
+       ======================================================== */
+    let audioCtx = null;
+    function playTempleBell() {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        const now = audioCtx.currentTime;
+        const fundamental = 392.0; // Tần số nốt Son ấm áp trầm hùng
+
+        // 3 Tầng sóng mô phỏng tiếng chuông đồng cổ truyền
+        const partials = [
+          { freq: fundamental * 1.0, gain: 0.6, decay: 4.5 },
+          { freq: fundamental * 1.505, gain: 0.4, decay: 3.5 },
+          { freq: fundamental * 2.01, gain: 0.3, decay: 2.5 },
+          { freq: fundamental * 2.76, gain: 0.2, decay: 1.8 },
+          { freq: fundamental * 4.2, gain: 0.1, decay: 1.0 }
+        ];
+
+        partials.forEach(p => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(p.freq, now);
+
+          gain.gain.setValueAtTime(p.gain, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + p.decay);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(now);
+          osc.stop(now + p.decay);
+        });
+      } catch (e) {
+        console.warn("Audio Context không khả dụng:", e);
+      }
+    }
+
+    /* ========================================================
+       5. RENDER GIAO DIỆN CHÍNH
+       ======================================================== */
+    let currentFilterType = 'all';
+    let currentSearchQuery = '';
+    let currentPrayerFilter = 'all';
+    let calDisplayDate = new Date();
+    let calSelectedDate = new Date();
+    let currentSelectedDetailEvent = null;
+
+    function renderApp() {
+      renderSidebarToday();
+      renderTodayAuspiciousCard();
+      renderHeroCountdown();
+      renderEventsList();
+      renderNotesList();
+      renderCalendar();
+      renderPrayersGrid();
+      renderFamilyBookPrint();
+      renderFamily();
+    }
+
+    /* Sidebar Status */
+    function renderSidebarToday() {
+      const now = new Date();
+      const lunar = solarToLunar(now.getDate(), now.getMonth() + 1, now.getFullYear());
+      const canChiY = getCanChiYear(lunar.year);
+      const canChiD = getCanChiDay(lunar.jd);
+
+      document.getElementById('sidebarLunarDay').innerText = `Ngày ${lunar.day} Tháng ${lunar.month}`;
+      document.getElementById('sidebarLunarCanChi').innerText = `Năm ${canChiY} • ${canChiD}`;
+      document.getElementById('sidebarSolarDay').innerText = `Dương lịch: ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+      document.getElementById('sidebarEventCount').innerText = appEvents.length;
+    }
+
+    /* Thẻ Hôm Nay & Giờ Hoàng Đạo */
+    function renderTodayAuspiciousCard() {
+      const now = new Date();
+      const lunar = solarToLunar(now.getDate(), now.getMonth() + 1, now.getFullYear());
+      const canChiY = getCanChiYear(lunar.year);
+      const canChiD = getCanChiDay(lunar.jd);
+      const solarTerm = getSolarTerm(now.getDate(), now.getMonth() + 1, now.getFullYear());
+      const isHoangDao = isHoangDaoDay(lunar.jd, lunar.month);
+      const hoangDaoHours = getHoangDaoHours(lunar.jd);
+
+      const daysOfWeek = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+      const dayStr = `${daysOfWeek[now.getDay()]}, ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+
+      const html = `
+        <div class="auspicious-header-row">
+          <div class="solar-date-badge">
+            <i class="fa-regular fa-calendar" style="color:var(--primary);"></i> ${dayStr}
+          </div>
+          <span class="hoang-dao-pill ${isHoangDao ? 'good' : 'bad'}">
+            <i class="fa-solid ${isHoangDao ? 'fa-star' : 'fa-circle-exclamation'}"></i>
+            ${isHoangDao ? 'Ngày Hoàng Đạo' : 'Ngày Hắc Đạo'}
+          </span>
+        </div>
+
+        <div class="auspicious-main-row">
+          <div class="lunar-day-large">
+            <span class="num">${lunar.day}</span>
+            <span class="lbl">Âm Lịch</span>
+          </div>
+          <div class="lunar-details-box">
+            <h3>Tháng ${lunar.month} Âm Lịch ${lunar.isLeap ? '(Nhuận)' : ''}</h3>
+            <p>Năm ${canChiY} • Ngày ${canChiD}</p>
+            <p style="color:var(--gold-dark); font-weight:600;"><i class="fa-solid fa-wind"></i> Tiết khí: ${solarTerm}</p>
+          </div>
+        </div>
+
+        <div class="auspicious-hours-section">
+          <div class="auspicious-hours-title">
+            <i class="fa-solid fa-clock"></i> Các Giờ Hoàng Đạo Cúng Tế Hôm Nay:
+          </div>
+          <div class="hours-chips-wrap">
+            ${hoangDaoHours.map(h => `<div class="hour-chip">${h}</div>`).join('')}
+          </div>
+        </div>
+      `;
+      document.getElementById('todayAuspiciousCard').innerHTML = html;
+    }
+
+    /* Countdown Hero */
+    function renderHeroCountdown() {
+      const occurrences = appEvents
+        .map(e => calculateNextOccurrence(e))
+        .filter(o => o !== null)
+        .sort((a, b) => a.daysRemaining - b.daysRemaining);
+
+      const container = document.getElementById('heroCountdownContainer');
+      if (occurrences.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:20px;">
+            <i class="fa-solid fa-calendar-plus" style="font-size:32px; color:var(--gold); margin-bottom:10px;"></i>
+            <h3>Chưa có ngày giỗ nào được thêm</h3>
+            <p style="font-size:13px; color:rgba(255,255,255,0.7); margin-top:4px;">Bấm nút "Thêm Ngày Giỗ" ở góc trên để ghi nhớ ngày kỵ của gia tiên.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const next = occurrences[0];
+      const ev = next.event;
+
+      let badgeText = `Còn ${next.daysRemaining} ngày nữa`;
+      let urgentClass = '';
+      if (next.daysRemaining === 0) {
+        badgeText = 'HÔM NAY - CHÍNH KỴ';
+        urgentClass = 'urgent';
+      } else if (next.daysRemaining === 1) {
+        badgeText = 'NGÀY MAI (CHIỀU NAY TIÊN THƯỜNG)';
+      }
+
+      const dSolar = `${next.nextSolarDate.getDate()}/${next.nextSolarDate.getMonth() + 1}/${next.nextSolarDate.getFullYear()}`;
+
+      container.innerHTML = `
+        <div class="hero-top-badge-row">
+          <div class="hero-badge-title">
+            <i class="fa-solid fa-hourglass-half"></i> SỰ KIỆN GẦN NHẤT
+          </div>
+          <div class="hero-days-remaining">
+            <i class="fa-regular fa-clock"></i> ${badgeText}
+          </div>
+        </div>
+
+        <div class="hero-event-name">${ev.title}</div>
+        <div class="hero-person-detail">
+          <span><i class="fa-solid fa-user"></i> Cố nhân: <strong>${ev.personName || ev.title}</strong></span>
+          ${ev.relation ? `<span>• Quan hệ: <strong>${ev.relation}</strong></span>` : ''}
+          ${ev.ageAtDeath ? `<span>• Hưởng thọ: <strong>${ev.ageAtDeath} tuổi</strong></span>` : ''}
+        </div>
+
+        <div class="hero-info-grid">
+          <div class="hero-info-item">
+            <label>Ngày Chính kỵ Âm lịch:</label>
+            <span>Ngày ${next.adjustedDay} tháng ${ev.month} Âm</span>
+          </div>
+          <div class="hero-info-item">
+            <label>Ngày Dương lịch năm nay:</label>
+            <span>${dSolar}</span>
+          </div>
+          ${next.anniversaryCount ? `
+            <div class="hero-info-item">
+              <label>Giỗ lần thứ:</label>
+              <span>Năm thứ ${next.anniversaryCount}</span>
+            </div>
+          ` : ''}
+          ${ev.restingPlace ? `
+            <div class="hero-info-item">
+              <label>Mộ phần / Nơi an nghỉ:</label>
+              <span style="font-size:12.5px; font-weight:normal;">${ev.restingPlace}</span>
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="hero-actions">
+          <button class="btn-gold" onclick="openPrayerForEvent('${ev.id}')">
+            <i class="fa-solid fa-book-open"></i> Đọc Văn Khấn Điền Sẵn
+          </button>
+          <button class="btn-royal" style="background:rgba(255,255,255,0.15); border-color:rgba(255,255,255,0.4);" onclick="openEventDetail('${ev.id}')">
+            <i class="fa-solid fa-utensils"></i> Mâm Cỗ & Thu Chi
+          </button>
+        </div>
+      `;
+    }
+
+    /* Danh sách ngày giỗ */
+    function renderEventsList() {
+      const container = document.getElementById('eventListContainer');
+      const now = new Date();
+
+      const occurrences = appEvents
+        .map(e => calculateNextOccurrence(e))
+        .filter(o => o !== null)
+        .sort((a, b) => a.daysRemaining - b.daysRemaining);
+
+      const filtered = occurrences.filter(occ => {
+        const ev = occ.event;
+        if (currentSearchQuery) {
+          const q = currentSearchQuery.toLowerCase();
+          const matchTitle = ev.title.toLowerCase().includes(q);
+          const matchName = (ev.personName || '').toLowerCase().includes(q);
+          const matchRel = (ev.relation || '').toLowerCase().includes(q);
+          if (!matchTitle && !matchName && !matchRel) return false;
+        }
+
+        if (currentFilterType === 'upcoming_30') {
+          return occ.daysRemaining <= 30;
+        } else if (currentFilterType === 'this_month') {
+          return occ.nextSolarDate.getMonth() === now.getMonth() && occ.nextSolarDate.getFullYear() === now.getFullYear();
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:32px; color:var(--text-muted);">
+            <i class="fa-solid fa-calendar-xmark" style="font-size:32px; margin-bottom:8px; opacity:0.5;"></i>
+            <p>Không tìm thấy sự kiện giỗ phù hợp</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(occ => {
+        const ev = occ.event;
+        const dSolar = `${occ.nextSolarDate.getDate()}/${occ.nextSolarDate.getMonth() + 1}/${occ.nextSolarDate.getFullYear()}`;
+        
+        let badgeClass = '';
+        let badgeText = `Còn ${occ.daysRemaining} ngày`;
+        if (occ.daysRemaining === 0) {
+          badgeClass = 'today';
+          badgeText = 'HÔM NAY';
+        } else if (occ.daysRemaining === 1) {
+          badgeClass = 'tomorrow';
+          badgeText = 'NGÀY MAI';
+        }
+
+        return `
+          <div class="event-card-item ${occ.daysRemaining <= 3 ? 'urgent' : ''}" onclick="openEventDetail('${ev.id}')">
+            <div class="event-avatar-icon">
+              <i class="fa-solid fa-fire"></i>
+            </div>
+            <div class="event-card-info">
+              <div class="event-card-title">${ev.title}</div>
+              <div class="event-card-lunar">
+                ${ev.calendar === 'lunar' ? `Ngày ${occ.adjustedDay}/${ev.month} Âm lịch` : `Ngày ${ev.day}/${ev.month} Dương lịch`}
+                ${ev.personName ? `• ${ev.personName}` : ''}
+              </div>
+              <div class="event-card-solar">
+                <i class="fa-regular fa-calendar"></i> Dương: ${dSolar}
+                ${ev.restingPlace ? `• An nghỉ: ${ev.restingPlace}` : ''}
+              </div>
+            </div>
+            <div class="event-card-badge">
+              <span class="days-badge ${badgeClass}">${badgeText}</span>
+              ${occ.anniversaryCount ? `<div class="anniversary-badge">Giỗ lần ${occ.anniversaryCount}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* Danh sách ghi chú */
+    function renderNotesList() {
+      const container = document.getElementById('notesListContainer');
+      if (appNotes.length === 0) {
+        container.innerHTML = `
+          <p style="text-align:center; padding:16px; font-size:12.5px; color:var(--text-muted);">
+            Chưa có ghi chú nào. Bấm "+ Ghi chú" để thêm việc cần làm.
+          </p>
+        `;
+        return;
+      }
+
+      container.innerHTML = appNotes.map(n => {
+        const catLabels = {
+          offering: 'Đồ lễ cúng',
+          family: 'Việc dòng họ',
+          todo: 'Cần làm',
+          general: 'Ghi nhớ'
+        };
+        return `
+          <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg-paper); border-radius:var(--radius-md); border:1px solid var(--border-color);">
+            <input type="checkbox" ${n.isCompleted ? 'checked' : ''} onchange="toggleNoteCompleted('${n.id}', this.checked)" style="width:16px; height:16px; cursor:pointer;">
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:13px; font-weight:600; text-decoration:${n.isCompleted ? 'line-through' : 'none'}; color:${n.isCompleted ? 'var(--text-muted)' : 'var(--text-main)'};">
+                ${n.title}
+              </div>
+              <div style="font-size:11px; color:var(--text-muted); display:flex; gap:8px; margin-top:2px;">
+                <span style="color:#00897B; font-weight:600;">[${catLabels[n.category] || 'Việc họ'}]</span>
+                <span>${n.date}</span>
+                ${n.time ? `<span>• ${n.time}</span>` : ''}
+              </div>
+            </div>
+            <button onclick="deleteNoteItem('${n.id}')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:13px;" title="Xóa">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* ========================================================
+       6. RENDER LỊCH THÁNG ÂM DƯƠNG
+       ======================================================== */
+    function calendarDateKey(dateObj) {
+      return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+    }
+
+    function escapeCalendarText(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[char]);
+    }
+
+    function renderCalendar() {
+      const year = calDisplayDate.getFullYear();
+      const month = calDisplayDate.getMonth(); // 0..11
+
+      document.getElementById('calMonthTitle').innerText = `Tháng ${month + 1} năm ${year}`;
+
+      const firstDay = new Date(year, month, 1);
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      // Ngày trong tuần của ngày 1 (Thứ 2 = 1, Chủ nhật = 0)
+      let startDay = firstDay.getDay(); // 0: Sun, 1: Mon, ...
+      let offset = (startDay === 0) ? 6 : startDay - 1; // 0..6 (Mon..Sun)
+
+      const tbody = document.getElementById('calTableBody');
+      tbody.innerHTML = '';
+
+      let date = 1;
+      const today = new Date();
+
+      for (let i = 0; i < 6; i++) {
+        let row = document.createElement('tr');
+        let hasCells = false;
+
+        for (let j = 0; j < 7; j++) {
+          let cell = document.createElement('td');
+
+          if (i === 0 && j < offset) {
+            cell.className = 'cal-cell empty';
+          } else if (date > daysInMonth) {
+            cell.className = 'cal-cell empty';
+          } else {
+            hasCells = true;
+            const currentCellDate = new Date(year, month, date);
+            const isToday = currentCellDate.toDateString() === today.toDateString();
+            const lunar = solarToLunar(date, month + 1, year);
+            const isWeekend = (j === 5 || j === 6);
+
+            // Kiểm tra có giỗ
+            const dayOccurrences = appEvents.map(e => calculateNextOccurrence(e, currentCellDate))
+              .filter(occ => occ && occ.daysRemaining === 0);
+            const dayNotes = appNotes.filter(n => n.date === calendarDateKey(currentCellDate));
+            const hasEvent = dayOccurrences.length > 0;
+            const hasNote = dayNotes.length > 0;
+
+            cell.className = `cal-cell ${isToday ? 'today' : ''} ${isWeekend ? 'sun' : ''}`;
+            cell.dataset.date = calendarDateKey(currentCellDate);
+            cell.onclick = () => selectCalendarDate(new Date(year, month, currentCellDate.getDate()));
+
+            let lunarLabel = (lunar.day === 1) ? `${lunar.day}/${lunar.month}` : `${lunar.day}`;
+            let isRam = (lunar.day === 15);
+            let isFirst = (lunar.day === 1);
+
+            cell.innerHTML = `
+              <div class="cal-cell-header">
+                <span class="cal-solar-num">${date}</span>
+                <span class="cal-lunar-num ${isFirst ? 'first-day' : ''} ${isRam ? 'ram' : ''}" title="Ngày ${lunar.day} tháng ${lunar.month} âm lịch">${lunarLabel}</span>
+              </div>
+              <div class="cal-markers">
+                ${hasEvent ? `<div class="cal-marker-line event" title="${escapeCalendarText(dayOccurrences.map(o => o.event.title).join(', '))}"><span class="cal-dot event"></span><span class="cal-marker-text">${escapeCalendarText(dayOccurrences[0].event.title)}${dayOccurrences.length > 1 ? ` +${dayOccurrences.length - 1}` : ''}</span></div>` : ''}
+                ${hasNote ? `<div class="cal-marker-line note" title="${escapeCalendarText(dayNotes.map(n => n.title).join(', '))}"><span class="cal-dot note"></span><span class="cal-marker-text">${escapeCalendarText(dayNotes[0].title)}${dayNotes.length > 1 ? ` +${dayNotes.length - 1}` : ''}</span></div>` : ''}
+              </div>
+            `;
+            date++;
+          }
+          row.appendChild(cell);
+        }
+
+        if (hasCells) {
+          tbody.appendChild(row);
+        }
+      }
+
+      const selectedInMonth = calSelectedDate.getFullYear() === year && calSelectedDate.getMonth() === month;
+      selectCalendarDate(selectedInMonth ? calSelectedDate : new Date(year, month, 1));
+    }
+
+    function prevMonth() {
+      calDisplayDate = new Date(calDisplayDate.getFullYear(), calDisplayDate.getMonth() - 1, 1);
+      calSelectedDate = new Date(calDisplayDate);
+      renderCalendar();
+    }
+
+    function nextMonth() {
+      calDisplayDate = new Date(calDisplayDate.getFullYear(), calDisplayDate.getMonth() + 1, 1);
+      calSelectedDate = new Date(calDisplayDate);
+      renderCalendar();
+    }
+
+    function selectCalendarDate(dateObj) {
+      calSelectedDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+      document.querySelectorAll('#calTableBody .cal-cell.selected').forEach(cell => cell.classList.remove('selected'));
+      const selectedCell = [...document.querySelectorAll('#calTableBody .cal-cell[data-date]')]
+        .find(cell => cell.dataset.date === calendarDateKey(calSelectedDate));
+      if (selectedCell) selectedCell.classList.add('selected');
+      const lunar = solarToLunar(dateObj.getDate(), dateObj.getMonth() + 1, dateObj.getFullYear());
+      const canChiY = getCanChiYear(lunar.year);
+      const canChiD = getCanChiDay(lunar.jd);
+      const solarTerm = getSolarTerm(dateObj.getDate(), dateObj.getMonth() + 1, dateObj.getFullYear());
+      const isHoangDao = isHoangDaoDay(lunar.jd, lunar.month);
+      const hoangDaoHours = getHoangDaoHours(lunar.jd);
+
+      // Tìm sự kiện & ghi chú
+      const dateStr = calendarDateKey(dateObj);
+      const occurrences = appEvents.map(e => calculateNextOccurrence(e, dateObj)).filter(o => o && o.daysRemaining === 0);
+      const notes = appNotes.filter(n => n.date === dateStr);
+
+      const panel = document.getElementById('calSelectedDayPanel');
+      panel.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+          <div>
+            <h4 style="font-size:16px; font-weight:800; color:var(--primary);">
+              Ngày ${dateObj.getDate()}/${dateObj.getMonth() + 1}/${dateObj.getFullYear()} 
+              <span style="color:var(--gold); font-size:14px;">(Âm lịch: ${lunar.day}/${lunar.month})</span>
+            </h4>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">
+              Năm ${canChiY} • Ngày ${canChiD} • Tiết khí: ${solarTerm} • 
+              <strong style="color:${isHoangDao ? '#2E7D32' : '#E65100'};">${isHoangDao ? 'Hoàng Đạo' : 'Hắc Đạo'}</strong>
+            </div>
+          </div>
+          <button class="btn-royal" style="padding:6px 12px; font-size:12px;" onclick="openAddNoteModalForDate('${dateStr}')">
+            <i class="fa-solid fa-plus"></i> Thêm việc cần nhớ
+          </button>
+        </div>
+
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px;">
+          <strong>Giờ Hoàng Đạo làm lễ:</strong> ${hoangDaoHours.join(', ')}
+        </div>
+
+        <div style="margin-top:10px;">
+          ${occurrences.length > 0 ? `
+            <div style="margin-bottom:8px;">
+              <strong style="font-size:12.5px; color:var(--primary);"><i class="fa-solid fa-fire"></i> Sự kiện giỗ hôm này:</strong>
+              ${occurrences.map(o => `
+                <div style="margin-top:4px; padding:6px 10px; background:rgba(139,30,15,0.08); border-radius:var(--radius-sm); font-size:12.5px;">
+                  <strong>${o.event.title}</strong> (${o.event.personName || ''})
+                  <button class="btn-outline-royal" style="padding:2px 8px; font-size:11px; margin-left:10px;" onclick="openPrayerForEvent('${o.event.id}')">Xem văn khấn</button>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          ${notes.length > 0 ? `
+            <div>
+              <strong style="font-size:12.5px; color:#00897B;"><i class="fa-solid fa-list-check"></i> Việc cần làm trong ngày:</strong>
+              ${notes.map(n => `
+                <div style="margin-top:4px; font-size:12px; color:var(--text-main);">
+                  • ${n.title} ${n.time ? `(${n.time})` : ''}
+                </div>
+              `).join('')}
+            </div>
+          ` : '<p style="font-size:12px; color:var(--text-muted);">Không có sự kiện giỗ hay việc cần nhớ nào trong ngày này.</p>'}
+        </div>
+      `;
+    }
+
+    /* ========================================================
+       7. KHO VĂN KHẤN & CHẾ ĐỘ ĐỌC TOÀN MÀN HÌNH
+       ======================================================== */
+    function renderPrayersGrid() {
+      const container = document.getElementById('prayersGridContainer');
+      const filtered = PRAYERS_DATA.filter(p => currentPrayerFilter === 'all' || p.category === currentPrayerFilter);
+
+      container.innerHTML = filtered.map(p => `
+        <div class="prayer-card" onclick="openPrayerReader('${p.id}')">
+          <div>
+            <h4><i class="fa-solid fa-scroll" style="margin-right:6px; color:var(--gold);"></i> ${p.title}</h4>
+            <p style="margin-top:6px;">${p.occasion}</p>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-color); padding-top:10px;">
+            <span style="font-size:11px; color:var(--gold-dark); font-weight:700;">Xem bài cúng & lễ vật</span>
+            <i class="fa-solid fa-arrow-right" style="color:var(--primary); font-size:12px;"></i>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openPrayerReader(prayerId, dynamicData = {}) {
+      const p = PRAYERS_DATA.find(x => x.id === prayerId) || PRAYERS_DATA[0];
+      const now = new Date();
+      const lunar = solarToLunar(now.getDate(), now.getMonth() + 1, now.getFullYear());
+      const canChiY = getCanChiYear(lunar.year);
+      const canChiD = getCanChiDay(lunar.jd);
+
+      document.getElementById('readerTitle').innerText = p.title;
+
+      const giaChu = appProfile.giaChu || '........................................';
+      const diaChi = appProfile.diaChi || '........................................';
+      const ngayAm = dynamicData.ngayAm || `Ngày ${lunar.day} tháng ${lunar.month} Âm lịch (${canChiD})`;
+      const namAm = canChiY;
+      const nguoiMat = dynamicData.nguoiMat || '........................................';
+      const quanHe = dynamicData.quanHe || '........................................';
+
+      let content = p.content
+        .replace(/{gia_chu}/g, giaChu)
+        .replace(/{dia_chi}/g, diaChi)
+        .replace(/{ngay_am}/g, ngayAm)
+        .replace(/{nam_am}/g, namAm)
+        .replace(/{nguoi_mat}/g, nguoiMat)
+        .replace(/{quan_he}/g, quanHe);
+
+      document.getElementById('readerBanner').innerHTML = `
+        <strong>Tín chủ:</strong> ${giaChu} • <strong>Ngụ tại:</strong> ${diaChi}<br>
+        <strong>Thời gian:</strong> ${ngayAm} năm ${namAm}
+      `;
+      document.getElementById('readerContent').innerText = content;
+      document.getElementById('readerContent').style.fontSize = (appProfile.prayerFontSize || 19) + 'px';
+
+      openModal('prayerReaderModal');
+    }
+
+    function adjustReaderFont(delta) {
+      let current = parseInt(document.getElementById('readerContent').style.fontSize) || 19;
+      current = Math.max(14, Math.min(32, current + delta));
+      document.getElementById('readerContent').style.fontSize = current + 'px';
+      appProfile.prayerFontSize = current;
+      saveProfile();
+    }
+
+    function copyPrayerContent() {
+      const text = document.getElementById('readerContent').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Đã sao chép nội dung bài văn khấn vào bộ nhớ tạm!");
+      });
+    }
+
+    /* ========================================================
+       8. XUẤT SỔ GIỖ GIA TỘC IN ẤN & GỬI ZALO
+       ======================================================== */
+    function renderFamilyBookPrint() {
+      const container = document.getElementById('familyBookPrintArea');
+      const sorted = [...appEvents].sort((a, b) => {
+        if (a.month !== b.month) return a.month - b.month;
+        return a.day - b.day;
+      });
+
+      container.innerHTML = `
+        <div style="text-align:center; margin-bottom:28px; border-bottom:2px solid #8B1E0F; padding-bottom:18px;">
+          <h2 style="font-family:'Playfair Display',serif; font-size:26px; color:#8B1E0F; font-weight:900; letter-spacing:1px;">
+            SỔ GIỖ GIA TỘC VIỆT NAM
+          </h2>
+          <p style="font-size:14px; font-weight:700; color:#D4AF37; margin-top:4px;">
+            "Ẩm Hà Tư Nguyên • Mộc Hữu Bản Thủy Hữu Nguyên"
+          </p>
+          <div style="font-size:13px; color:#555; margin-top:6px;">
+            Gia chủ: <strong>${appProfile.giaChu || 'Gia tộc'}</strong> • Địa chỉ: <strong>${appProfile.diaChi || ''}</strong>
+          </div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
+          <thead>
+            <tr style="background:#FBF4EB; border-bottom:1.5px solid #8B1E0F;">
+              <th style="padding:10px; text-align:center; width:45px;">STT</th>
+              <th style="padding:10px; text-align:left;">Ngày Giỗ Âm Lịch</th>
+              <th style="padding:10px; text-align:left;">Tên Người Quá Cố</th>
+              <th style="padding:10px; text-align:left;">Mối Quan Hệ</th>
+              <th style="padding:10px; text-align:left;">Nơi An Nghỉ</th>
+              <th style="padding:10px; text-align:left;">Ghi Chú Lễ Tục</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sorted.map((ev, idx) => `
+              <tr style="border-bottom:1px solid #EADBCE;">
+                <td style="padding:10px; text-align:center; font-weight:bold;">${idx + 1}</td>
+                <td style="padding:10px; color:#8B1E0F; font-weight:bold;">
+                  Ngày ${ev.day} tháng ${ev.month} Âm
+                </td>
+                <td style="padding:10px; font-weight:700;">${ev.personName || ev.title}</td>
+                <td style="padding:10px;">${ev.relation || '—'}</td>
+                <td style="padding:10px; font-size:12.5px;">${ev.restingPlace || '—'}</td>
+                <td style="padding:10px; font-size:12.5px;">${ev.notes || '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div style="margin-top:30px; text-align:right; font-size:12.5px; font-style:italic; color:#666;">
+          Trích lục Sổ Giỗ Gia Tộc ngày ${new Date().toLocaleDateString('vi-VN')}
+        </div>
+      `;
+    }
+
+    function copyZaloText() {
+      const sorted = [...appEvents].sort((a, b) => {
+        if (a.month !== b.month) return a.month - b.month;
+        return a.day - b.day;
+      });
+
+      let text = `====================================\n`;
+      text += `       SỔ GIỖ GIA TỘC TRONG NĂM\n`;
+      if (appProfile.giaChu) text += `Gia chủ: ${appProfile.giaChu}\n`;
+      if (appProfile.diaChi) text += `Địa chỉ: ${appProfile.diaChi}\n`;
+      text += `====================================\n\n`;
+
+      sorted.forEach((ev, i) => {
+        text += `${i + 1}. ${ev.title}\n`;
+        text += `   • Ngày Âm lịch: Ngày ${ev.day} tháng ${ev.month} Âm\n`;
+        if (ev.personName) text += `   • Cố nhân: ${ev.personName} (${ev.relation || ''})\n`;
+        if (ev.year) text += `   • Năm mất: ${ev.year}\n`;
+        if (ev.restingPlace) text += `   • An nghỉ: ${ev.restingPlace}\n`;
+        text += `\n`;
+      });
+      text += `\"Uống nước nhớ nguồn - Con cháu một lòng hiếu thảo!\"`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Đã sao chép bản tin Sổ Giỗ! Bạn có thể dán vào nhóm Zalo gia đình ngay.");
+      });
+    }
+
+    /* ========================================================
+       9. THÊM / SỬA / XÓA SỰ KIỆN & GHI CHÚ
+       ======================================================== */
+    function openAddEventModal() {
+      document.getElementById('eventModalTitle').innerText = 'Thêm Ngày Giỗ Mới';
+      document.getElementById('modalEventId').value = '';
+      document.getElementById('modalEventTitle').value = '';
+      document.getElementById('modalEventCalendar').value = 'lunar';
+      document.getElementById('modalEventType').value = 'deathAnniversary';
+      document.getElementById('modalEventDay').value = 15;
+      document.getElementById('modalEventMonth').value = 8;
+      document.getElementById('modalEventYear').value = '';
+      document.getElementById('modalEventAge').value = '';
+      document.getElementById('modalEventPerson').value = '';
+      document.getElementById('modalEventRelation').value = '';
+      document.getElementById('modalEventResting').value = '';
+      document.getElementById('modalEventNotes').value = '';
+      openModal('addEventModal');
+    }
+
+    function saveEventItem() {
+      const id = document.getElementById('modalEventId').value || 'ev_' + Date.now();
+      const title = document.getElementById('modalEventTitle').value.trim();
+      if (!title) {
+        alert("Vui lòng nhập tiêu đề ngày giỗ!");
+        return;
+      }
+
+      const calendar = document.getElementById('modalEventCalendar').value;
+      const type = document.getElementById('modalEventType').value;
+      const day = parseInt(document.getElementById('modalEventDay').value) || 1;
+      const month = parseInt(document.getElementById('modalEventMonth').value) || 1;
+      const year = parseInt(document.getElementById('modalEventYear').value) || null;
+      const ageAtDeath = parseInt(document.getElementById('modalEventAge').value) || null;
+      const personName = document.getElementById('modalEventPerson').value.trim() || null;
+      const relation = document.getElementById('modalEventRelation').value.trim() || null;
+      const restingPlace = document.getElementById('modalEventResting').value.trim() || null;
+      const notes = document.getElementById('modalEventNotes').value.trim() || null;
+
+      const existingIdx = appEvents.findIndex(e => e.id === id);
+      const newEv = {
+        id,
+        title,
+        type,
+        calendar,
+        day,
+        month,
+        year,
+        ageAtDeath,
+        personName,
+        relation,
+        restingPlace,
+        notes,
+        dishes: existingIdx !== -1 ? (appEvents[existingIdx].dishes || []) : ['Gà luộc', 'Xôi gấc', 'Canh măng', 'Giò lụa'],
+        contributions: existingIdx !== -1 ? (appEvents[existingIdx].contributions || []) : []
+      };
+
+      if (existingIdx !== -1) {
+        appEvents[existingIdx] = newEv;
+      } else {
+        appEvents.push(newEv);
+      }
+
+      saveEvents();
+      closeModal('addEventModal');
+      renderApp();
+    }
+
+    function openEventDetail(eventId) {
+      const ev = appEvents.find(e => e.id === eventId);
+      if (!ev) return;
+      currentSelectedDetailEvent = ev;
+
+      const occ = calculateNextOccurrence(ev);
+      const dSolar = occ ? `${occ.nextSolarDate.getDate()}/${occ.nextSolarDate.getMonth() + 1}/${occ.nextSolarDate.getFullYear()}` : '--';
+
+      const totalContrib = (ev.contributions || []).reduce((sum, c) => sum + (c.amount || 0), 0);
+
+      document.getElementById('detailModalTitle').innerText = ev.title;
+      document.getElementById('detailModalBody').innerHTML = `
+        <div style="background:linear-gradient(135deg, rgba(139,30,15,0.08) 0%, rgba(212,175,55,0.08) 100%); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color); margin-bottom:16px;">
+          <h4 style="font-size:18px; color:var(--primary); font-weight:800;">${ev.title}</h4>
+          <div style="font-size:13px; color:var(--text-muted); margin-top:3px;">
+            ${ev.personName ? `Cố nhân: <strong>${ev.personName}</strong> • ` : ''}
+            ${ev.relation ? `Quan hệ: <strong>${ev.relation}</strong>` : ''}
+          </div>
+          <div style="font-size:13px; color:var(--text-main); margin-top:6px;">
+            <strong>Ngày Âm lịch:</strong> Ngày ${ev.day} tháng ${ev.month} Âm • <strong>Dương lịch năm nay:</strong> ${dSolar}
+          </div>
+          ${ev.restingPlace ? `<div style="font-size:12.5px; color:var(--text-muted); margin-top:4px;">Nơi an nghỉ: ${ev.restingPlace}</div>` : ''}
+          ${ev.notes ? `<div style="font-size:12.5px; color:#8B1E0F; margin-top:6px; font-style:italic;">Lưu ý: ${ev.notes}</div>` : ''}
+        </div>
+
+        <!-- MÂM CỖ CHECKLIST -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="font-size:13.5px; color:var(--primary);"><i class="fa-solid fa-utensils"></i> Danh Sách Mâm Cỗ & Đồ Sắm:</strong>
+            <button class="btn-outline-royal" style="padding:2px 8px; font-size:11px;" onclick="addDishPrompt('${ev.id}')">+ Thêm món</button>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px;">
+            ${(ev.dishes || []).map(dish => `
+              <span style="background:var(--bg-paper); border:1px solid var(--border-color); padding:4px 10px; border-radius:var(--radius-sm); font-size:12px; display:inline-flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-check" style="color:green; font-size:10px;"></i> ${dish}
+              </span>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- THU CHI ĐÓNG GÓP -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <strong style="font-size:13.5px; color:var(--primary);"><i class="fa-solid fa-hand-holding-dollar"></i> Đóng Góp Con Cháu:</strong>
+            <button class="btn-outline-royal" style="padding:2px 8px; font-size:11px;" onclick="addContribPrompt('${ev.id}')">+ Thêm đóng góp</button>
+          </div>
+          <div style="font-size:12.5px; font-weight:700; color:#2E7D32; margin-bottom:6px;">
+            Tổng tiền công đức: ${totalContrib.toLocaleString('vi-VN')} VNĐ
+          </div>
+          ${(ev.contributions || []).map(c => `
+            <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--border-color);">
+              <span>${c.memberName} (${c.note || 'Hiếu sự'})</span>
+              <strong>${(c.amount || 0).toLocaleString('vi-VN')} đ</strong>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      openModal('eventDetailModal');
+    }
+
+    function addDishPrompt(eventId) {
+      const dish = prompt("Nhập tên món ăn / đồ cần sắm cho mâm cỗ:");
+      if (dish && dish.trim()) {
+        const ev = appEvents.find(e => e.id === eventId);
+        if (ev) {
+          ev.dishes = ev.dishes || [];
+          ev.dishes.push(dish.trim());
+          saveEvents();
+          openEventDetail(eventId);
+        }
+      }
+    }
+
+    function addContribPrompt(eventId) {
+      const name = prompt("Tên con cháu đóng góp:");
+      if (!name) return;
+      const amountStr = prompt("Số tiền đóng góp (VNĐ):", "500000");
+      const amount = parseFloat(amountStr) || 0;
+      const note = prompt("Ghi chú (mua sắm/công đức):", "Đóng góp cỗ giỗ");
+
+      const ev = appEvents.find(e => e.id === eventId);
+      if (ev) {
+        ev.contributions = ev.contributions || [];
+        ev.contributions.push({
+          id: 'c_' + Date.now(),
+          memberName: name.trim(),
+          amount,
+          note: note ? note.trim() : ''
+        });
+        saveEvents();
+        openEventDetail(eventId);
+      }
+    }
+
+    function editCurrentDetailEvent() {
+      if (!currentSelectedDetailEvent) return;
+      closeModal('eventDetailModal');
+      const ev = currentSelectedDetailEvent;
+
+      document.getElementById('eventModalTitle').innerText = 'Sửa Ngày Giỗ';
+      document.getElementById('modalEventId').value = ev.id;
+      document.getElementById('modalEventTitle').value = ev.title;
+      document.getElementById('modalEventCalendar').value = ev.calendar || 'lunar';
+      document.getElementById('modalEventType').value = ev.type || 'deathAnniversary';
+      document.getElementById('modalEventDay').value = ev.day;
+      document.getElementById('modalEventMonth').value = ev.month;
+      document.getElementById('modalEventYear').value = ev.year || '';
+      document.getElementById('modalEventAge').value = ev.ageAtDeath || '';
+      document.getElementById('modalEventPerson').value = ev.personName || '';
+      document.getElementById('modalEventRelation').value = ev.relation || '';
+      document.getElementById('modalEventResting').value = ev.restingPlace || '';
+      document.getElementById('modalEventNotes').value = ev.notes || '';
+      openModal('addEventModal');
+    }
+
+    function deleteCurrentDetailEvent() {
+      if (!currentSelectedDetailEvent) return;
+      if (confirm(`Bạn có chắc chắn muốn xóa "${currentSelectedDetailEvent.title}" không?`)) {
+        appEvents = appEvents.filter(e => e.id !== currentSelectedDetailEvent.id);
+        saveEvents();
+        closeModal('eventDetailModal');
+        renderApp();
+      }
+    }
+
+    function openPrayerForCurrentEvent() {
+      if (!currentSelectedDetailEvent) return;
+      closeModal('eventDetailModal');
+      openPrayerForEvent(currentSelectedDetailEvent.id);
+    }
+
+    function openPrayerForEvent(eventId) {
+      const ev = appEvents.find(e => e.id === eventId);
+      if (!ev) return;
+      openPrayerReader('gio_chinh_ky', {
+        ngayAm: `Ngày ${ev.day} tháng ${ev.month} Âm lịch`,
+        nguoiMat: ev.personName || ev.title,
+        quanHe: ev.relation || 'tiền tổ'
+      });
+    }
+
+    /* Notes */
+    function openAddNoteModal() {
+      openAddNoteModalForDate(new Date().toISOString().split('T')[0]);
+    }
+
+    function openAddNoteModalForDate(dateStr) {
+      document.getElementById('modalNoteId').value = '';
+      document.getElementById('modalNoteTitle').value = '';
+      document.getElementById('modalNoteDate').value = dateStr;
+      document.getElementById('modalNoteCategory').value = 'todo';
+      document.getElementById('modalNoteTime').value = '';
+      openModal('addNoteModal');
+    }
+
+    function saveNoteItem() {
+      const title = document.getElementById('modalNoteTitle').value.trim();
+      if (!title) {
+        alert("Vui lòng nhập nội dung việc cần nhớ!");
+        return;
+      }
+      const date = document.getElementById('modalNoteDate').value || new Date().toISOString().split('T')[0];
+      const category = document.getElementById('modalNoteCategory').value;
+      const time = document.getElementById('modalNoteTime').value;
+
+      appNotes.push({
+        id: 'n_' + Date.now(),
+        title,
+        date,
+        category,
+        time,
+        isCompleted: false
+      });
+      saveNotes();
+      closeModal('addNoteModal');
+      renderApp();
+    }
+
+    function toggleNoteCompleted(noteId, isCompleted) {
+      const n = appNotes.find(x => x.id === noteId);
+      if (n) {
+        n.isCompleted = isCompleted;
+        saveNotes();
+        renderApp();
+      }
+    }
+
+    function deleteNoteItem(noteId) {
+      appNotes = appNotes.filter(n => n.id !== noteId);
+      saveNotes();
+      renderApp();
+    }
+
+    /* Tra cứu nhanh */
+    function openQuickConverter() {
+      const now = new Date();
+      document.getElementById('convDay').value = now.getDate();
+      document.getElementById('convMonth').value = now.getMonth() + 1;
+      document.getElementById('convYear').value = now.getFullYear();
+      document.getElementById('convResultBox').style.display = 'none';
+      openModal('quickConverterModal');
+    }
+
+    function calculateQuickConversion() {
+      const d = parseInt(document.getElementById('convDay').value) || 1;
+      const m = parseInt(document.getElementById('convMonth').value) || 1;
+      const y = parseInt(document.getElementById('convYear').value) || 2026;
+
+      const lunar = solarToLunar(d, m, y);
+      const canChiY = getCanChiYear(lunar.year);
+      const canChiD = getCanChiDay(lunar.jd);
+      const solarTerm = getSolarTerm(d, m, y);
+      const isHoangDao = isHoangDaoDay(lunar.jd, lunar.month);
+
+      const box = document.getElementById('convResultBox');
+      box.style.display = 'block';
+      box.innerHTML = `
+        <h4 style="font-size:20px; color:var(--primary); font-weight:800;">
+          Ngày ${lunar.day} tháng ${lunar.month} Âm lịch
+        </h4>
+        <p style="font-size:13px; color:var(--text-muted); margin-top:4px;">
+          Năm ${canChiY} • Ngày ${canChiD}
+        </p>
+        <p style="font-size:12px; color:var(--gold-dark); margin-top:2px;">
+          Tiết khí: ${solarTerm} • ${isHoangDao ? 'Ngày Hoàng Đạo cát lợi' : 'Ngày Hắc Đạo'}
+        </p>
+      `;
+    }
+
+    /* Modal utilities */
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    /* Tab switching */
+    function switchTab(tabName) {
+      ['home', 'calendar', 'prayers', 'family', 'export', 'settings'].forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        if (el) el.style.display = (t === tabName) ? 'block' : 'none';
+      });
+
+      // Update Nav List
+      document.querySelectorAll('.nav-item').forEach((item, idx) => {
+        const tabs = ['home', 'calendar', 'prayers', 'family', 'export', 'settings'];
+        if (tabs[idx] === tabName) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      // Update Bottom Nav
+      document.querySelectorAll('.bottom-nav-item').forEach((item, idx) => {
+        const tabs = ['home', 'calendar', 'prayers', 'family', 'export', 'settings'];
+        if (tabs[idx] === tabName) {
+          item.classList.add('active');
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      // Title
+      const titles = {
+        home: 'Trang Chủ & Lễ Nghi Gia Tộc',
+        calendar: 'Lịch Âm Dương Vạn Niên',
+        prayers: 'Kho Văn Khấn Cổ Truyền',
+        family: 'Gia Phả Dòng Họ',
+        export: 'In Sổ Giỗ & Chia Sẻ Dòng Họ',
+        settings: 'Cài Đặt & Dữ Liệu'
+      };
+      document.getElementById('topbarTitle').innerText = titles[tabName] || 'Sổ Giỗ Gia Tộc';
+      document.getElementById('topbarAddDesktop').classList.toggle('family-action-hidden', tabName === 'family');
+      document.getElementById('topbarAddMobile').classList.toggle('family-action-hidden', tabName === 'family');
+
+      if (tabName === 'calendar') {
+        renderCalendar();
+      } else if (tabName === 'family') {
+        renderFamily();
+      } else if (tabName === 'export') {
+        renderFamilyBookPrint();
+      }
+    }
+
+    function setEventFilter(filter, el) {
+      currentFilterType = filter;
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderEventsList();
+    }
+
+    function filterEvents() {
+      currentSearchQuery = document.getElementById('eventSearchInput').value.trim();
+      renderEventsList();
+    }
+
+    function setPrayerFilter(cat, el) {
+      currentPrayerFilter = cat;
+      document.querySelectorAll('#tab-prayers .filter-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderPrayersGrid();
+    }
+
+    function toggleTheme() {
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      const mobIcon = document.getElementById('mobileThemeIcon');
+      if (isDark) {
+        document.body.removeAttribute('data-theme');
+        document.getElementById('themeIcon').className = 'fa-solid fa-moon';
+        if (mobIcon) mobIcon.className = 'fa-solid fa-moon';
+        appProfile.isDarkMode = false;
+      } else {
+        document.body.setAttribute('data-theme', 'dark');
+        document.getElementById('themeIcon').className = 'fa-solid fa-sun';
+        if (mobIcon) mobIcon.className = 'fa-solid fa-sun';
+        appProfile.isDarkMode = true;
+      }
+      saveProfile();
+    }
+
+    function saveProfileSettings() {
+      appProfile.giaChu = document.getElementById('settingGiaChu').value.trim();
+      appProfile.diaChi = document.getElementById('settingDiaChi').value.trim();
+      appProfile.prayerFontSize = parseInt(document.getElementById('settingFontSize').value) || 19;
+      saveProfile();
+      alert("Đã lưu cài đặt thông tin gia chủ!");
+      renderApp();
+    }
+
+    function exportBackupData() {
+      const backup = {
+        app: 'SoGioVaKyNiem',
+        version: '1.3.0',
+        exportedAt: new Date().toISOString(),
+        profile: appProfile,
+        events: appEvents,
+        notes: appNotes,
+        familyPeople: appFamily
+      };
+      const jsonStr = JSON.stringify(backup, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `So_Gio_Gia_Toc_Backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function openRestoreModal() {
+      const input = prompt("Dán nội dung JSON sao lưu vào đây:");
+      if (input && input.trim()) {
+        try {
+          const data = JSON.parse(input);
+          if (data.events && Array.isArray(data.events)) {
+            appEvents = data.events;
+            saveEvents();
+          }
+          if (data.notes && Array.isArray(data.notes)) {
+            appNotes = data.notes;
+            saveNotes();
+          }
+          if (data.profile) {
+            appProfile = { ...appProfile, ...data.profile };
+            saveProfile();
+          }
+          if (Array.isArray(data.familyPeople)) {
+            appFamily = data.familyPeople;
+            saveFamily();
+          }
+          alert("Phục hồi dữ liệu thành công!");
+          renderApp();
+        } catch (e) {
+          alert("Mã JSON sao lưu không hợp lệ!");
+        }
+      }
+    }
+
+    function loadSampleDataConfirm() {
+      if (confirm("Khôi phục danh sách ngày giỗ mẫu chuẩn ban đầu?")) {
+        appEvents = getSampleEvents();
+        appNotes = getSampleNotes();
+        saveEvents();
+        saveNotes();
+        renderApp();
+      }
+    }
+
+    // Khởi chạy khi tài liệu sẵn sàng
+    document.addEventListener('DOMContentLoaded', () => {
+      loadInitialData();
+      renderApp();
+    });
+  </script>
+  <script src="family.js?v=3"></script>
+</body>
+</html>
