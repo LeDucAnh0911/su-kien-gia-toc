@@ -23,7 +23,7 @@ void main() {
           calendar: CalendarType.lunar,
           day: 15,
           month: 8,
-          personName: 'Lê Văn Đô',
+          personName: 'Ông Nội Mẫu',
           relation: 'Ông nội',
           year: 1985,
           createdAt: now,
@@ -44,20 +44,20 @@ void main() {
       ];
 
       final profile = UserProfile(
-        giaChu: 'Lê Đức Anh',
+        giaChu: 'Người Mẫu',
         diaChi: 'Hà Tĩnh',
       );
 
       final family = [
         const FamilyPerson(
           id: 'fp_1',
-          name: 'Lê Đức Anh',
+          name: 'Người Mẫu',
           gender: 'male',
           branch: 'noi',
         ),
         const FamilyPerson(
           id: 'fp_2',
-          name: 'Nguyễn Thị Thương',
+          name: 'Vợ Mẫu',
           gender: 'female',
           spouseIds: ['fp_1'],
           branch: 'vo_ck',
@@ -75,14 +75,14 @@ void main() {
 
       // Giải mã JSON kiểm tra tính toàn vẹn
       final dynamic decoded = jsonDecode(jsonString);
-      expect(decoded['version'], equals('1.3.0'));
+      expect(decoded['version'], equals('1.4.0'));
       expect(decoded['events'], isA<List>());
       expect((decoded['events'] as List).length, equals(1));
       expect(decoded['notes'], isA<List>());
       expect((decoded['notes'] as List).length, equals(1));
       expect(decoded['familyPeople'], isA<List>());
       expect((decoded['familyPeople'] as List).length, equals(2));
-      expect(decoded['profile']['giaChu'], equals('Lê Đức Anh'));
+      expect(decoded['profile']['giaChu'], equals('Người Mẫu'));
     });
 
     test('Phục hồi dữ liệu từ JSON parse đúng tiếng Việt có dấu và cấu trúc gia phả', () {
@@ -91,7 +91,7 @@ void main() {
   "version": 1,
   "exportDate": "2026-10-09T10:00:00.000",
   "profile": {
-    "giaChu": "Lê Đức Anh",
+    "giaChu": "Người Mẫu",
     "diaChi": "TP Hà Tĩnh",
     "prayerFontSize": 16.0,
     "isDarkMode": false
@@ -123,13 +123,13 @@ void main() {
   "familyPeople": [
     {
       "id": "p_1",
-      "name": "Lê Văn Đô",
+      "name": "Ông Nội Mẫu",
       "gender": "male",
       "branch": "noi"
     },
     {
       "id": "p_2",
-      "name": "Trương Thị Lạng",
+      "name": "Bà Nội Mẫu",
       "gender": "female",
       "spouseIds": ["p_1"],
       "branch": "noi"
@@ -153,13 +153,24 @@ void main() {
       expect(notes.first.title, equals('Nhắc việc họ'));
 
       expect(family.length, equals(2));
-      expect(family[0].name, equals('Lê Văn Đô'));
-      expect(family[1].name, equals('Trương Thị Lạng'));
+      expect(family[0].name, equals('Ông Nội Mẫu'));
+      expect(family[1].name, equals('Bà Nội Mẫu'));
       expect(family[1].spouseIds.contains('p_1'), isTrue);
 
       expect(profile, isNotNull);
-      expect(profile!.giaChu, equals('Lê Đức Anh'));
+      expect(profile!.giaChu, equals('Người Mẫu'));
       expect(profile.diaChi, equals('TP Hà Tĩnh'));
+    });
+
+    test('Từ chối tệp thiếu danh sách để tránh xóa sổ hiện có', () {
+      expect(
+        () => storageService.parseBackupData('{"profile":{"giaChu":"Mẫu"}}'),
+        throwsFormatException,
+      );
+      expect(
+        () => storageService.parseBackupData('{"events":[],"notes":{},"familyPeople":[]}'),
+        throwsFormatException,
+      );
     });
   });
 }

@@ -343,7 +343,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> with SingleTick
                 controller: giaChuController,
                 decoration: const InputDecoration(
                   labelText: 'Tên Tín chủ / Gia chủ',
-                  hintText: 'VD: Lê Đức Anh',
+                  hintText: 'VD: Tên gia chủ',
                 ),
               ),
               const SizedBox(height: 8),
@@ -368,7 +368,7 @@ class _PrayerDetailScreenState extends State<PrayerDetailScreen> with SingleTick
                   controller: nguoiMatController,
                   decoration: const InputDecoration(
                     labelText: 'Tên người mất',
-                    hintText: 'VD: Lê Văn Phúc',
+                    hintText: 'VD: Ông Nội',
                   ),
                 ),
               ],

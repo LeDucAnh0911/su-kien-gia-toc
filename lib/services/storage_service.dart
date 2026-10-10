@@ -1,13 +1,15 @@
 /// Service lưu trữ cục bộ Cross-Platform (Events, Daily Notes, Profile)
 import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/event_model.dart';
 import '../models/note_model.dart';
 import '../models/family_person.dart';
 
 class UserProfile {
-  String giaChu;   // Tên gia chủ (VD: Lê Đức Anh)
-  String diaChi;  // Địa chỉ (VD: Số 12, Trần Phú, TP Hà Tĩnh)
+  String giaChu;
+  String diaChi;
   double prayerFontSize; // Cỡ chữ khi đọc văn khấn
   bool isDarkMode;
   bool isPremium;
@@ -15,8 +17,8 @@ class UserProfile {
   String premiumTier; // 'free', 'trial', 'monthly', 'yearly', 'lifetime'
 
   UserProfile({
-    this.giaChu = 'Lê Đức Anh',
-    this.diaChi = 'Số 12, Trần Phú, TP Hà Tĩnh',
+    this.giaChu = '',
+    this.diaChi = '',
     this.prayerFontSize = 18.0,
     this.isDarkMode = false,
     this.isPremium = false,
@@ -48,8 +50,8 @@ class UserProfile {
       expire = DateTime.tryParse(map['premiumExpireDate'].toString());
     }
     return UserProfile(
-      giaChu: gc.isNotEmpty ? gc : 'Lê Đức Anh',
-      diaChi: (map['diaChi'] ?? 'Số 12, Trần Phú, TP Hà Tĩnh').toString(),
+      giaChu: gc,
+      diaChi: (map['diaChi'] ?? '').toString(),
       prayerFontSize: (map['prayerFontSize'] as num?)?.toDouble() ?? 18.0,
       isDarkMode: map['isDarkMode'] ?? false,
       isPremium: map['isPremium'] == true,
@@ -67,36 +69,7 @@ class StorageService {
   static const String _keyFocusPersonId = 'app_family_focus_id';
   static const String _keyFamilySyncCode = 'app_family_sync_code';
   static const String _keyLastSyncTime = 'app_last_sync_time';
-  static const String _keyUserRole = 'app_user_role'; // 'admin' (Trưởng họ) hoặc 'member' (Con cháu)
-  static const String _keyCustomFirebaseConfig = 'app_custom_firebase_config';
-
-  Future<String> loadUserRole() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyUserRole) ?? 'admin';
-  }
-
-  Future<void> saveUserRole(String role) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyUserRole, role);
-  }
-
-  Future<Map<String, String>?> loadCustomFirebaseConfig() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonStr = prefs.getString(_keyCustomFirebaseConfig);
-    if (jsonStr == null || jsonStr.isEmpty) return null;
-    try {
-      final decoded = json.decode(jsonStr) as Map<String, dynamic>;
-      return decoded.map((k, v) => MapEntry(k, v.toString()));
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Future<void> saveCustomFirebaseConfig(Map<String, String> config) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyCustomFirebaseConfig, json.encode(config));
-  }
-
+  static const String _keySyncRevisions = 'app_family_sync_revisions';
   Future<String?> loadFamilySyncCode() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyFamilySyncCode);
@@ -119,6 +92,31 @@ class StorageService {
     await prefs.setString(_keyLastSyncTime, time.toIso8601String());
   }
 
+  Future<int?> loadSyncRevision(String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keySyncRevisions);
+    if (raw == null) return null;
+    try {
+      final revisions = jsonDecode(raw) as Map<String, dynamic>;
+      return revisions[code] is int ? revisions[code] as int : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> saveSyncRevision(String code, int revision) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keySyncRevisions);
+    Map<String, dynamic> revisions = {};
+    if (raw != null) {
+      try {
+        revisions = jsonDecode(raw) as Map<String, dynamic>;
+      } catch (_) {}
+    }
+    revisions[code] = revision;
+    await prefs.setString(_keySyncRevisions, jsonEncode(revisions));
+  }
+
   Future<String?> loadFocusPersonId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyFocusPersonId);
@@ -133,26 +131,27 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final content = prefs.getString(_keyFamily);
     if (content == null || content.trim().isEmpty) {
-      final initialPeople = getInitialSampleFamilyPeople();
-      await saveFamilyPeople(initialPeople);
-      return initialPeople;
+      return [];
     }
     try {
       final list = jsonDecode(content) as List<dynamic>;
       if (list.isEmpty) {
-        final initialPeople = getInitialSampleFamilyPeople();
-        await saveFamilyPeople(initialPeople);
-        return initialPeople;
+        return [];
       }
-      return list.map((item) => FamilyPerson.fromMap(item as Map<String, dynamic>)).toList();
+      return list
+          .map((item) => FamilyPerson.fromMap(item as Map<String, dynamic>))
+          .toList();
     } catch (_) {
-      return getInitialSampleFamilyPeople();
+      return [];
     }
   }
 
   Future<void> saveFamilyPeople(List<FamilyPerson> people) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyFamily, jsonEncode(people.map((p) => p.toMap()).toList()));
+    await prefs.setString(
+      _keyFamily,
+      jsonEncode(people.map((p) => p.toMap()).toList()),
+    );
   }
 
   /// Tải danh sách sự kiện từ SharedPreferences
@@ -162,20 +161,18 @@ class StorageService {
       final content = prefs.getString(_keyEvents);
 
       if (content == null || content.trim().isEmpty) {
-        final initialEvents = getInitialSampleEvents();
-        await saveEvents(initialEvents);
-        return initialEvents;
+        return [];
       }
 
       final List<dynamic> list = jsonDecode(content);
       if (list.isEmpty) {
-        final initialEvents = getInitialSampleEvents();
-        await saveEvents(initialEvents);
-        return initialEvents;
+        return [];
       }
-      return list.map((item) => EventItem.fromMap(item as Map<String, dynamic>)).toList();
+      return list
+          .map((item) => EventItem.fromMap(item as Map<String, dynamic>))
+          .toList();
     } catch (e) {
-      return getInitialSampleEvents();
+      return [];
     }
   }
 
@@ -193,15 +190,15 @@ class StorageService {
       final content = prefs.getString(_keyNotes);
 
       if (content == null || content.trim().isEmpty) {
-        final initialNotes = getInitialSampleNotes();
-        await saveNotes(initialNotes);
-        return initialNotes;
+        return [];
       }
 
       final List<dynamic> list = jsonDecode(content);
-      return list.map((item) => DailyNoteItem.fromMap(item as Map<String, dynamic>)).toList();
+      return list
+          .map((item) => DailyNoteItem.fromMap(item as Map<String, dynamic>))
+          .toList();
     } catch (e) {
-      return getInitialSampleNotes();
+      return [];
     }
   }
 
@@ -241,7 +238,7 @@ class StorageService {
   ) async {
     final backup = {
       'app': 'SoGioVaKyNiem',
-      'version': '1.3.0',
+      'version': '1.4.0',
       'exportedAt': DateTime.now().toIso8601String(),
       'profile': profile.toMap(),
       'events': events.map((e) => e.toMap()).toList(),
@@ -253,10 +250,17 @@ class StorageService {
 
   /// Phục hồi dữ liệu từ chuỗi JSON (Restore)
   Map<String, dynamic> parseBackupData(String jsonString) {
+    if (jsonString.length > 10 * 1024 * 1024) {
+      throw const FormatException('Tệp sao lưu vượt quá 10 MB.');
+    }
     final map = jsonDecode(jsonString) as Map<String, dynamic>;
-    final List<dynamic> eventsList = map['events'] ?? [];
-    final List<dynamic> notesList = map['notes'] ?? [];
-    final List<dynamic> familyList = map['familyPeople'] ?? [];
+    if (map['events'] is! List || map['notes'] is! List ||
+        (map.containsKey('familyPeople') && map['familyPeople'] is! List)) {
+      throw const FormatException('Bản sao lưu thiếu danh sách sự kiện hoặc ghi chú.');
+    }
+    final List<dynamic> eventsList = map['events'] as List<dynamic>;
+    final List<dynamic> notesList = map['notes'] as List<dynamic>;
+    final List<dynamic> familyList = (map['familyPeople'] as List<dynamic>?) ?? [];
 
     UserProfile? profile;
     if (map['profile'] != null && map['profile'] is Map<String, dynamic>) {
@@ -266,9 +270,15 @@ class StorageService {
     }
 
     return {
-      'events': eventsList.map((item) => EventItem.fromMap(item as Map<String, dynamic>)).toList(),
-      'notes': notesList.map((item) => DailyNoteItem.fromMap(item as Map<String, dynamic>)).toList(),
-      'familyPeople': familyList.map((item) => FamilyPerson.fromMap(item as Map<String, dynamic>)).toList(),
+      'events': eventsList
+          .map((item) => EventItem.fromMap(item as Map<String, dynamic>))
+          .toList(),
+      'notes': notesList
+          .map((item) => DailyNoteItem.fromMap(item as Map<String, dynamic>))
+          .toList(),
+      'familyPeople': familyList
+          .map((item) => FamilyPerson.fromMap(item as Map<String, dynamic>))
+          .toList(),
       'hasFamilyPeople': map.containsKey('familyPeople'),
       'profile': profile,
     };
@@ -286,9 +296,9 @@ class StorageService {
         day: 15,
         month: 8,
         year: 2012,
-        personName: 'Lê Văn Phúc',
+        personName: 'Cụ Ông Mẫu',
         relation: 'Cụ Ông (Nội)',
-        restingPlace: 'Khu lăng mộ họ Lê, Nghĩa trang Quê nhà',
+        restingPlace: 'Nơi an nghỉ mẫu',
         ageAtDeath: 86,
         remindTienThuong: true,
         remindChinhKy: true,
@@ -304,8 +314,18 @@ class StorageService {
           'Chè sen tráng miệng',
         ],
         contributions: [
-          ContributionItem(id: 'c1', memberName: 'Gia đình Bác Cả', amount: 2000000, note: 'Mua lễ vật và vàng mã'),
-          ContributionItem(id: 'c2', memberName: 'Gia đình Chú Hai', amount: 1500000, note: 'Đóng góp làm cỗ'),
+          ContributionItem(
+            id: 'c1',
+            memberName: 'Gia đình Bác Cả',
+            amount: 2000000,
+            note: 'Mua lễ vật và vàng mã',
+          ),
+          ContributionItem(
+            id: 'c2',
+            memberName: 'Gia đình Chú Hai',
+            amount: 1500000,
+            note: 'Đóng góp làm cỗ',
+          ),
         ],
         createdAt: now,
         updatedAt: now,
@@ -318,14 +338,15 @@ class StorageService {
         day: 30,
         month: 12,
         year: 2018,
-        personName: 'Trần Thị Hiền',
+        personName: 'Cụ Bà Mẫu',
         relation: 'Cụ Bà (Ngoại)',
-        restingPlace: 'Nghĩa trang Xã, khu Đồng Cây',
+        restingPlace: 'Nơi an nghỉ mẫu',
         ageAtDeath: 82,
         remindTienThuong: true,
         remindChinhKy: true,
         advanceDays: 5,
-        notes: 'Nếu tháng Chạp chỉ có 29 ngày thì cúng vào ngày 29 (Tháng thiếu).',
+        notes:
+            'Nếu tháng Chạp chỉ có 29 ngày thì cúng vào ngày 29 (Tháng thiếu).',
         dishes: [
           'Gà luộc',
           'Bánh chưng Tết',
@@ -345,7 +366,7 @@ class StorageService {
         day: 20,
         month: 11,
         year: 1965,
-        personName: 'Lê Văn Nam',
+        personName: 'Cha Mẫu',
         relation: 'Bố',
         remindTienThuong: false,
         remindChinhKy: true,
@@ -398,19 +419,19 @@ class StorageService {
       // 1. Ông bà nội (Đời 1)
       const FamilyPerson(
         id: 'fp_ong_noi',
-        name: 'Lê Văn Đô',
+        name: 'Ông Nội Mẫu',
         gender: 'male',
         branch: 'noi',
-        birthDate: '1935',
+        birthDate: '',
         spouseIds: ['fp_ba_noi'],
         notes: 'Ông nội',
       ),
       const FamilyPerson(
         id: 'fp_ba_noi',
-        name: 'Trương Thị Lạng',
+        name: 'Bà Nội Mẫu',
         gender: 'female',
         branch: 'noi',
-        birthDate: '1938',
+        birthDate: '',
         spouseIds: ['fp_ong_noi'],
         notes: 'Bà nội',
       ),
@@ -418,20 +439,20 @@ class StorageService {
       // 2. Ông ngoại (Đời 1)
       const FamilyPerson(
         id: 'fp_ong_ngoai',
-        name: 'Nghiêm Khang',
+        name: 'Ông Ngoại Mẫu',
         gender: 'male',
         branch: 'ngoai',
-        birthDate: '1937',
+        birthDate: '',
         notes: 'Ông ngoại',
       ),
 
       // 3. Thế hệ bố mẹ & các cô chú bác (Đời 2)
       const FamilyPerson(
         id: 'fp_bo',
-        name: 'Lê Văn Hùng',
+        name: 'Cha Mẫu',
         gender: 'male',
         branch: 'noi',
-        birthDate: '1961',
+        birthDate: '1960',
         birthOrder: 1,
         fatherId: 'fp_ong_noi',
         motherId: 'fp_ba_noi',
@@ -440,20 +461,20 @@ class StorageService {
       ),
       const FamilyPerson(
         id: 'fp_me',
-        name: 'Nghiêm Thị Linh',
+        name: 'Mẹ Mẫu',
         gender: 'female',
         branch: 'ngoai',
-        birthDate: '1964',
+        birthDate: '',
         fatherId: 'fp_ong_ngoai',
         spouseIds: ['fp_bo'],
         notes: 'Mẹ',
       ),
       const FamilyPerson(
-        id: 'fp_chu_vuong',
-        name: 'Lê Quang Vượng',
+        id: 'fp_uncle_one',
+        name: 'Chú Mẫu 1',
         gender: 'male',
         branch: 'noi',
-        birthDate: '1972',
+        birthDate: '1970',
         birthOrder: 2,
         fatherId: 'fp_ong_noi',
         motherId: 'fp_ba_noi',
@@ -461,10 +482,10 @@ class StorageService {
       ),
       const FamilyPerson(
         id: 'fp_chu_cuong',
-        name: 'Lê Kiên Cường',
+        name: 'Chú Mẫu 2',
         gender: 'male',
         branch: 'noi',
-        birthDate: '1975',
+        birthDate: '',
         birthOrder: 3,
         fatherId: 'fp_ong_noi',
         motherId: 'fp_ba_noi',
@@ -472,10 +493,10 @@ class StorageService {
       ),
       const FamilyPerson(
         id: 'fp_co_huong',
-        name: 'Lê Thị Hường',
+        name: 'Cô Mẫu',
         gender: 'female',
         branch: 'noi',
-        birthDate: '1978',
+        birthDate: '',
         birthOrder: 4,
         fatherId: 'fp_ong_noi',
         motherId: 'fp_ba_noi',
@@ -484,23 +505,23 @@ class StorageService {
 
       // 4. Tôi & Vợ (Đời 3)
       const FamilyPerson(
-        id: 'fp_duc_anh',
-        name: 'Lê Đức Anh',
+        id: 'fp_focus',
+        name: 'Người Mẫu',
         gender: 'male',
         branch: 'noi',
-        birthDate: '09/11/1989',
+        birthDate: '',
         birthOrder: 1,
         fatherId: 'fp_bo',
         motherId: 'fp_me',
-        spouseIds: ['fp_vo_thuong'],
+        spouseIds: ['fp_spouse'],
         notes: 'Bản thân (Chủ gia phả)',
       ),
       const FamilyPerson(
-        id: 'fp_em_minh',
-        name: 'Lê Quang Minh',
+        id: 'fp_sibling',
+        name: 'Em Trai Mẫu',
         gender: 'male',
         branch: 'noi',
-        birthDate: '1998',
+        birthDate: '',
         birthOrder: 2,
         fatherId: 'fp_bo',
         motherId: 'fp_me',
@@ -510,28 +531,28 @@ class StorageService {
       // 5. Bên Vợ (Họ Nguyễn)
       const FamilyPerson(
         id: 'fp_bo_vo',
-        name: 'Nguyễn Quốc Nam',
+        name: 'Bố Vợ Mẫu',
         gender: 'male',
         branch: 'vo',
-        birthDate: '1956',
+        birthDate: '',
         spouseIds: ['fp_me_vo'],
         notes: 'Bố vợ (Nhạc phụ)',
       ),
       const FamilyPerson(
         id: 'fp_me_vo',
-        name: 'Từ Thị Nga',
+        name: 'Mẹ Vợ Mẫu',
         gender: 'female',
         branch: 'vo',
-        birthDate: '1963',
+        birthDate: '',
         spouseIds: ['fp_bo_vo'],
         notes: 'Mẹ vợ (Nhạc mẫu)',
       ),
       const FamilyPerson(
         id: 'fp_chi_vo_trang',
-        name: 'Nguyễn Thị Thu Trang',
+        name: 'Chị Vợ Mẫu Một',
         gender: 'female',
         branch: 'vo',
-        birthDate: '1987',
+        birthDate: '',
         birthOrder: 1,
         fatherId: 'fp_bo_vo',
         motherId: 'fp_me_vo',
@@ -539,33 +560,33 @@ class StorageService {
       ),
       const FamilyPerson(
         id: 'fp_chi_vo_dung',
-        name: 'Nguyễn Thị Dung',
+        name: 'Chị Vợ Mẫu Hai',
         gender: 'female',
         branch: 'vo',
-        birthDate: '1989',
+        birthDate: '',
         birthOrder: 2,
         fatherId: 'fp_bo_vo',
         motherId: 'fp_me_vo',
         notes: 'Chị vợ',
       ),
       const FamilyPerson(
-        id: 'fp_vo_thuong',
-        name: 'Nguyễn Thị Thương',
+        id: 'fp_spouse',
+        name: 'Vợ Mẫu',
         gender: 'female',
         branch: 'vo',
-        birthDate: '1991',
+        birthDate: '',
         birthOrder: 3,
         fatherId: 'fp_bo_vo',
         motherId: 'fp_me_vo',
-        spouseIds: ['fp_duc_anh'],
+        spouseIds: ['fp_focus'],
         notes: 'Vợ',
       ),
       const FamilyPerson(
         id: 'fp_em_vo_quyen',
-        name: 'Nguyễn Thị Quyên',
+        name: 'Em Vợ Mẫu',
         gender: 'female',
         branch: 'vo',
-        birthDate: '1993',
+        birthDate: '',
         birthOrder: 4,
         fatherId: 'fp_bo_vo',
         motherId: 'fp_me_vo',
@@ -574,14 +595,14 @@ class StorageService {
 
       // 6. Con trai (Đời 4)
       const FamilyPerson(
-        id: 'fp_con_lam',
-        name: 'Lê Tùng Lâm',
+        id: 'fp_child',
+        name: 'Con Mẫu',
         gender: 'male',
         branch: 'con_chau',
-        birthDate: '13/01/2025',
+        birthDate: '',
         birthOrder: 1,
-        fatherId: 'fp_duc_anh',
-        motherId: 'fp_vo_thuong',
+        fatherId: 'fp_focus',
+        motherId: 'fp_spouse',
         notes: 'Con trai',
       ),
     ];

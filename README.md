@@ -1,103 +1,37 @@
-# SỔ GIỖ & LỊCH GIA TỘC (VIETNAMESE ANCESTRAL CALENDAR & MEMORIAL APP)
+# Sự Kiện Gia Tộc
 
-Ứng dụng đa nền tảng (Android, iOS qua mã Flutter, Web/PWA) hỗ trợ quản lý ngày giỗ, gia phả nội ngoại, tra cứu lịch âm dương, văn khấn, ghi chú và chia sẻ sổ giỗ.
+Ứng dụng Flutter cá nhân để ghi ngày giỗ, sự kiện, ghi chú, văn khấn và quan hệ gia phả. Bản web: https://leducanh0911.github.io/su-kien-gia-toc/
 
----
+## Trạng thái hiện tại
 
-## 1. Các Tiêu Chí Nâng Cấp Nổi Bật
+- Dữ liệu được lưu trên thiết bị. Người dùng mới bắt đầu với sổ trống; dữ liệu đã lưu trên thiết bị cũ được giữ nguyên.
+- Sao lưu và phục hồi qua tệp JSON. Tệp JSON là văn bản chưa mã hóa, cần giữ riêng tư.
+- Google Sign-In đã được cấu hình cho dự án Firebase `so-gio-gia-toc`. Đăng nhập không tự đồng bộ.
+- Đồng bộ Firestore là thao tác thủ công. Cloud Firestore và `firestore.rules` phải được triển khai an toàn trước khi sử dụng dữ liệu thật. Hiện chưa công bố tính năng này là đã hoạt động.
+- Không có thanh toán hoặc gói VIP đang bán. Bản thử nghiệm được dùng miễn phí.
 
-### 🏛️ Bản Sắc Dân Tộc & Cung Đình Hoàng Gia
-- **Tone màu chủ đạo**: Đỏ Chu Sa sơn mài truyền thống (`#8B1E0F`), điểm xuyết ánh Vàng Hoàng Kim dát vàng (`#D4AF37`) trên nền giấy dó thanh tịnh.
-- **Họa tiết**: Trống Đồng Đông Sơn, Hoa Sen, vân mây cung đình mềm mại, tôn nghiêm.
-- **Văn hóa cổ truyền chuẩn mực**:
-  - Tự động phân định **Lễ Tiên Thường** (chiều hôm trước giỗ) và **Lễ Chính Kỵ** (ngày giỗ chính).
-  - Thuật toán thiên văn học **Âm Lịch Việt Nam chuẩn GMT+7** của TS. Hồ Ngọc Đức.
-  - Tự động xử lý **tháng thiếu 29 ngày** và **tháng nhuận**, không bao giờ bị lệch ngày cúng.
-  - Hiển thị **Can Chi** của Năm, Tháng, Ngày; tính **24 Tiết Khí** trong năm và **Ngày Hoàng Đạo / Hắc Đạo**.
-  - Liệt kê **6 khung giờ Hoàng Đạo trong ngày** để gia chủ chọn giờ đẹp làm lễ cúng.
+## Phát triển
 
-### ⚡ Công Nghệ Hiện Đại & Đa Nền Tảng (Dual-Mode Responsive)
-- **Trên Máy Tính / Màn hình rộng (Desktop / Tablet)**:
-  - Sidebar Hoàng Gia bên trái với đồng hồ Âm Dương và menu tiện ích.
-  - Bố cục 2-3 cột rộng rãi, sắc nét: Hero Countdown đếm ngược, danh sách ngày giỗ, việc cần làm.
-- **Trên Điện Thoại (Mobile)**:
-  - Tự động thích ứng giao diện Mobile App chuẩn, thanh điều hướng đáy (Bottom Navigation) mượt mà.
-  - Hỗ trợ cài đặt PWA (Add to Home Screen).
-- **Âm thanh Chuông Đồng Gia Tiên**:
-  - Tích hợp tiếng chuông đồng thanh tịnh được tổng hợp bằng Web Audio API (không cần tải file ngoài, ngân nga ấm áp trước khi đọc văn khấn).
-- **Kho Văn Khấn Cổ Truyền**:
-  - Tự động điền tên Gia chủ, Tín chủ, Địa chỉ, Tên cố nhân và Ngày cúng vào bài khấn.
-  - Chế độ đọc toàn màn hình với nút tăng/giảm cỡ chữ cho người lớn tuổi.
-- **Xuất Sổ Giỗ & Chia Sẻ Zalo**:
-  - Xuất bản in A4 chuẩn như bản sắc phong để dán phòng thờ hoặc lưu file PDF.
-  - Nút sao chép văn bản tóm tắt ngày giỗ trong năm để dán nhanh vào nhóm Zalo họ tộc.
-
-### 🌳 Gia phả dòng họ
-- Menu **Gia Phả** có trên Web hiện tại và trong mã Flutter cho Android/iOS.
-- Thêm, sửa, xóa hồ sơ; ghi tên, giới tính, nhánh nội/ngoại, ngày sinh/mất (có thể chỉ ghi năm), lịch âm/dương, quê quán, nơi an nghỉ và ghi chép.
-- Nối cha, mẹ, nhiều vợ/chồng; từ đó xem con, anh chị em và các đời. Có tìm kiếm, lọc nhánh, xem dạng cây hoặc danh sách.
-- Dữ liệu gia phả lưu cục bộ trên từng thiết bị; sao lưu JSON ở **Cài Đặt & Dữ Liệu** để chuyển sang thiết bị khác. Gia phả chưa tự đồng bộ giữa các máy.
-
----
-
-## 2. Cách Khởi Chạy & Sử Dụng
-
-### 🌐 Chạy Web App (Máy tính & Trình duyệt)
-- Nhấp đúp vào file `Mo_Ung_Dung_Web.bat` hoặc truy cập địa chỉ:
-  ```
-  http://localhost:8088/   (trên máy bàn 10.43.130.9)
-  hoặc
-  http://10.43.130.9:8088/ (từ các máy khác trong mạng nội bộ)
-  ```
-
-### 📱 Tải Cài Đặt Lên Điện Thoại Android
-- Truy cập `http://10.43.130.9:8088/` từ trình duyệt điện thoại và bấm nút **"Tải App Android"**, hoặc tải trực tiếp tại:
-  ```
-  http://10.43.130.9:8088/So_Gio_Gia_Toc.apk
-  ```
-
-### 🔨 Đóng Gói Lại Bản Cài Đặt (Khi Có Thay Đổi Code Dart)
-1. **Biên dịch bản Web**: Chạy file `Build_Web.bat`. Script biên dịch Flutter và đưa giao diện Web độc lập từ `standalone_web/` vào `build/web/`.
-2. **Đóng gói file cài đặt APK**: Chạy file `Xuat_File_Apk.bat` (file APK sau khi build sẽ tự động được copy vào `build\web\So_Gio_Gia_Toc.apk`)
-3. **Chạy Flutter Dev (Hot Reload)**: Chạy file `Chay_Flutter_Dev.bat`
-
----
-
-## 3. Cấu Trúc Mã Nguồn
-
+```powershell
+C:\src\flutter\bin\flutter.bat pub get
+C:\src\flutter\bin\flutter.bat test
+C:\src\flutter\bin\flutter.bat build web --release --no-wasm-dry-run
+Copy-Item web\flutter_service_worker.js build\web\flutter_service_worker.js -Force
 ```
-so_gio_app/
-├── lib/
-│   ├── data/
-│   │   └── prayers_data.dart         # Kho dữ liệu văn khấn cổ truyền & hàm thay thế thông tin
-│   ├── models/
-│   │   ├── event_model.dart          # Model Ngày Giỗ, Mâm Cỗ, Thu Chi Đóng Góp
-│   │   ├── family_person.dart         # Hồ sơ người thân và quan hệ gia phả
-│   │   └── note_model.dart           # Model Ghi Chú & Việc Cần Làm Theo Ngày
-│   ├── screens/
-│   │   ├── home_screen.dart          # Màn hình Trang Chủ (Hero Countdown, Tìm kiếm, Lọc)
-│   │   ├── family_screen.dart        # Gia phả trên Android/iOS/Flutter Web
-│   │   ├── calendar_screen.dart      # Màn hình Lịch Tháng Âm - Dương & Chi tiết ngày
-│   │   ├── prayers_screen.dart       # Danh mục các bài văn khấn cổ truyền
-│   │   ├── prayer_detail_screen.dart # Chi tiết bài khấn & chế độ đọc to chữ
-│   │   ├── event_detail_screen.dart  # Quản lý mâm cỗ, thu chi đóng góp con cháu
-│   │   ├── add_edit_event_screen.dart# Form thêm/sửa ngày giỗ
-│   │   └── settings_screen.dart      # Cài đặt gia chủ, sao lưu & xuất Sổ Giỗ Zalo
-│   ├── services/
-│   │   ├── event_calculator.dart     # Tính ngày giỗ tiếp theo & đếm ngược
-│   │   └── storage_service.dart      # Lưu trữ SharedPreferences & Sao lưu JSON
-│   ├── widgets/
-│   │   └── add_edit_note_sheet.dart  # Modal ghi chú nhanh
-│   ├── lunar_engine.dart             # Thuật toán Âm Lịch, Can Chi, Tiết Khí, Giờ Hoàng Đạo
-│   └── main.dart                     # Shell thích ứng đa màn hình Responsive Desktop & Mobile
-├── standalone_web/                  # Mã nguồn giao diện Web độc lập
-│   ├── index.html                    # Trang chính
-│   ├── family.js                     # Quản lý gia phả Web
-│   └── family.css                    # Giao diện gia phả Web
-├── build/web/                       # Bản Web đang được phục vụ ở cổng 8088
-│   └── So_Gio_Gia_Toc.apk            # Bản cài đặt Android
-├── Build_Web.bat                     # Script biên dịch Flutter Web
-├── Xuat_File_Apk.bat                 # Script đóng gói Android APK
-├── Chay_Flutter_Dev.bat              # Script chạy chế độ dev
-└── Mo_Ung_Dung_Web.bat               # Script khởi động web server cổng 8088
-```
+
+`Build_Web.bat` tạo bản Flutter và chép Service Worker riêng vào `build/web`; script không chép giao diện `standalone_web` đè lên ứng dụng nữa. Nhánh `main` chứa mã nguồn, nhánh `gh-pages` chứa bản web đã biên dịch. Kiểm tra hai nhánh trước khi phát hành.
+
+## Thiết kế quyền đám mây
+
+1. Chủ gia tộc đăng nhập Google, tạo mã `FAM-` ngẫu nhiên và tải bộ dữ liệu đầu tiên lên. Tài khoản tạo dữ liệu là chủ sở hữu.
+2. Chủ gia tộc thêm email Google đã xác minh của từng người thân. Người được mời dùng đúng email đó để đọc dữ liệu; mã mời một mình không cấp quyền.
+3. Chỉ chủ sở hữu tải lên. Mỗi bản ghi có số phiên bản; nếu một thiết bị khác đã cập nhật, bản tải lên cũ bị từ chối. Trước khi kéo dữ liệu về, ứng dụng xuất một bản sao lưu cục bộ.
+4. Quyền phải được kiểm tra trong `firestore.rules` trên máy chủ. Không dùng quy tắc công khai hay chỉ kiểm tra `request.auth != null`.
+
+**Chưa triển khai Firestore:** Khi tạo database, chọn chế độ khóa mặc định, kiểm thử và phát hành `firestore.rules` trước khi cho người dùng tải dữ liệu. Chạy `firebase deploy --only firestore:rules --project so-gio-gia-toc` từ thư mục này sau khi CLI đăng nhập đúng tài khoản quản trị. Quy tắc chưa được áp dụng chỉ vì tệp có mặt trong Git.
+
+Các tài liệu gia tộc theo định dạng mã cũ không tự được nhận quyền sở hữu. Hãy giữ bản sao lưu tại thiết bị, tạo mã mới và tải lại sau khi xác nhận Firestore đã an toàn.
+
+## Quyền riêng tư
+
+Ứng dụng không tự đăng hồ sơ lên internet. Dữ liệu có thể chứa thông tin người thân và trẻ em; chỉ tải lên khi có quyền chia sẻ. Mã nguồn và bản web công khai chỉ nên chứa dữ liệu ví dụ hư cấu. Dữ liệu đã được đưa lên lịch sử Git trước đây cần được xem xét riêng vì xóa trong bản hiện tại không xóa các commit cũ.

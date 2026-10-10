@@ -15,7 +15,7 @@ void main() {
     calendar: CalendarType.solar,
     day: 15,
     month: 10,
-    personName: 'Lê Văn Hùng',
+    personName: 'Cha Mẫu',
     createdAt: now,
     updatedAt: now,
   );
@@ -27,7 +27,7 @@ void main() {
     calendar: CalendarType.lunar,
     day: 15,
     month: 8,
-    personName: 'Lê Văn Đô',
+    personName: 'Ông Nội Mẫu',
     createdAt: now,
     updatedAt: now,
   );

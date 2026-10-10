@@ -123,7 +123,7 @@ void main() {
       const sampleBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
       final person = FamilyPerson(
         id: 'p1',
-        name: 'Lê Đức Anh',
+        name: 'Người Mẫu',
         avatarBase64: sampleBase64,
       );
 

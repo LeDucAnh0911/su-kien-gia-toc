@@ -2,13 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../models/event_model.dart';
 import '../models/note_model.dart';
 import '../models/family_person.dart';
-import 'dart:math';
 import '../services/storage_service.dart';
 import '../services/backup_file_service.dart';
 import '../services/firebase_sync_service.dart';
+import '../services/family_sync_code.dart';
 import '../services/event_reminder_service.dart';
 import 'offerings_guide_screen.dart';
 import 'paywall_screen.dart';
@@ -20,7 +21,8 @@ class SettingsScreen extends StatefulWidget {
   final List<FamilyPerson> familyPeople;
   final StorageService storageService;
   final Function(UserProfile) onProfileUpdated;
-  final Function(List<EventItem>, List<DailyNoteItem>, List<FamilyPerson>) onDataRestored;
+  final Function(List<EventItem>, List<DailyNoteItem>, List<FamilyPerson>)
+  onDataRestored;
 
   const SettingsScreen({
     super.key,
@@ -41,12 +43,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _giaChuController;
   late TextEditingController _diaChiController;
   late TextEditingController _syncCodeController;
+  late TextEditingController _memberEmailController;
 
   String? _googleUserEmail;
   String? _googleUserName;
   DateTime? _lastSyncTime;
   bool _isSyncing = false;
-  String _userRole = 'admin'; // 'admin' (Trưởng họ) hoặc 'member' (Con cháu)
 
   bool _remindersEnabled = true;
   int _remindAdvanceDays = 3;
@@ -59,21 +61,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _giaChuController = TextEditingController(text: widget.profile.giaChu);
     _diaChiController = TextEditingController(text: widget.profile.diaChi);
     _syncCodeController = TextEditingController();
+    _memberEmailController = TextEditingController();
     _loadSyncState();
   }
 
   Future<void> _loadSyncState() async {
     final code = await widget.storageService.loadFamilySyncCode();
     final lastTime = await widget.storageService.loadLastSyncTime();
-    final role = await widget.storageService.loadUserRole();
     final user = FirebaseSyncService().currentUser;
     await EventReminderService().loadSettings();
     final rem = EventReminderService().settings;
     if (mounted) {
       setState(() {
-        _syncCodeController.text = (code != null && code.isNotEmpty) ? code : 'LE-GIA-TOC-2026';
+        _syncCodeController.text = code ?? '';
         _lastSyncTime = lastTime;
-        _userRole = role;
         _remindersEnabled = rem.enabled;
         _remindAdvanceDays = rem.advanceDays;
         _remindTienThuong = rem.remindTienThuong;
@@ -101,6 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _giaChuController.dispose();
     _diaChiController.dispose();
     _syncCodeController.dispose();
+    _memberEmailController.dispose();
     super.dispose();
   }
 
@@ -111,13 +113,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cài Đặt & Dữ Liệu'),
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF8B2500),
+        backgroundColor: isDark
+            ? const Color(0xFF1E1E1E)
+            : const Color(0xFF8B2500),
         foregroundColor: Colors.white,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // BANNER GIA TỘC VIP (HỘI VIÊN HOÀNG KIM)
+          // Thông tin bản thử nghiệm miễn phí.
           GestureDetector(
             onTap: () {
               Navigator.push(
@@ -134,10 +138,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: widget.profile.isEffectivelyPremium
-                      ? [const Color(0xFF8B1E0F), const Color(0xFF5D1006)]
-                      : [const Color(0xFFD4AF37), const Color(0xFFAA7C11)],
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF8B1E0F), Color(0xFF5D1006)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -158,10 +160,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.2),
                     ),
-                    child: Icon(
-                      widget.profile.isEffectivelyPremium
-                          ? Icons.workspace_premium
-                          : Icons.stars_rounded,
+                    child: const Icon(
+                      Icons.auto_awesome_outlined,
                       color: Colors.white,
                       size: 28,
                     ),
@@ -171,10 +171,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.profile.isEffectivelyPremium
-                              ? 'HỘI VIÊN GIA TỘC VIP'
-                              : 'NÂNG CẤP GIA TỘC VIP (10k/Tháng)',
+                        const Text(
+                          'SỰ KIỆN GIA TỘC • BẢN THỬ NGHIỆM',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -183,18 +181,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          widget.profile.isEffectivelyPremium
-                              ? (widget.profile.premiumTier == 'trial'
-                                  ? 'Đang dùng thử 14 ngày miễn phí'
-                                  : 'Đã mở khóa toàn bộ tính năng cao cấp')
-                              : 'Dùng thử 14 ngày • Mở khóa gia phả vô hạn & đám mây',
-                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        const Text(
+                          'Hiện miễn phí; đồng bộ đám mây cần cấu hình bảo mật',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 16),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ],
               ),
             ),
@@ -203,7 +204,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // MỤC 1: THÔNG TIN GIA CHỦ
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -213,7 +216,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: const [
                       Icon(Icons.person_pin, color: Color(0xFF8B2500)),
                       SizedBox(width: 8),
-                      Text('Thông Tin Gia Chủ (Tự Điền Văn Khấn)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(
+                        'Thông Tin Gia Chủ (Tự Điền Văn Khấn)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -221,7 +230,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller: _giaChuController,
                     decoration: const InputDecoration(
                       labelText: 'Họ tên Gia chủ / Tín chủ',
-                      hintText: 'VD: Lê Đức Anh',
+                      hintText: 'VD: Tên gia chủ',
                       border: OutlineInputBorder(),
                     ),
                     onChanged: (val) => _saveProfileChanges(),
@@ -231,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     controller: _diaChiController,
                     decoration: const InputDecoration(
                       labelText: 'Nơi cư ngụ (Địa chỉ nhà)',
-                      hintText: 'VD: Số 12, Đường Trần Phú, TP Hà Tĩnh',
+                      hintText: 'VD: Địa chỉ dùng trong văn khấn',
                       border: OutlineInputBorder(),
                     ),
                     onChanged: (val) => _saveProfileChanges(),
@@ -244,7 +253,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // MỤC 2: XUẤT SỰ KIỆN GIA TỘC (GỬI ZALO / IN ẤN)
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -254,7 +265,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: const [
                       Icon(Icons.print_outlined, color: Color(0xFF8B1E0F)),
                       SizedBox(width: 8),
-                      Text('Xuất Sự Kiện Gia Tộc (Gửi Zalo / In Ấn)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(
+                        'Xuất Sự Kiện Gia Tộc (Gửi Zalo / In Ấn)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -267,10 +284,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF8B1E0F),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                     ),
                     icon: const Icon(Icons.share, size: 18),
-                    label: const Text('Xem & Sao Chép Sự Kiện Gửi Zalo', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'Xem & Sao Chép Sự Kiện Gửi Zalo',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     onPressed: _showExportFamilyBookDialog,
                   ),
                   const SizedBox(height: 10),
@@ -282,7 +305,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.green.shade800,
                           side: BorderSide(color: Colors.green.shade600),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
                         icon: const Icon(Icons.table_chart_outlined, size: 16),
                         label: const Text('Xuất Excel Sự Kiện (.CSV)'),
@@ -294,7 +320,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           if (ok && mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Đã xuất danh sách Sự Kiện ra file Excel thành công!'),
+                                content: Text(
+                                  'Đã xuất danh sách Sự Kiện ra file Excel thành công!',
+                                ),
                                 backgroundColor: Color(0xFF2E7D32),
                               ),
                             );
@@ -305,7 +333,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.teal.shade800,
                           side: BorderSide(color: Colors.teal.shade600),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
                         ),
                         icon: const Icon(Icons.people_alt_outlined, size: 16),
                         label: const Text('Xuất Excel Gia Phả (.CSV)'),
@@ -317,7 +348,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           if (ok && mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Đã xuất danh sách Gia Phả ra file Excel thành công!'),
+                                content: Text(
+                                  'Đã xuất danh sách Gia Phả ra file Excel thành công!',
+                                ),
                                 backgroundColor: Color(0xFF00695C),
                               ),
                             );
@@ -334,7 +367,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // MỤC 2B: CẨM NANG MÂM CỖ & SẮM LỄ
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -344,7 +379,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: const [
                       Icon(Icons.restaurant_menu, color: Color(0xFFD4AF37)),
                       SizedBox(width: 8),
-                      Text('Cẩm Nang Sắm Lễ & Mâm Cỗ Truyền Thống', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(
+                        'Cẩm Nang Sắm Lễ & Mâm Cỗ Truyền Thống',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -357,10 +398,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFD4AF37),
                       foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                     ),
                     icon: const Icon(Icons.menu_book, size: 18),
-                    label: const Text('Mở Cẩm Nang & Checklist Sắm Lễ', style: TextStyle(fontWeight: FontWeight.bold)),
+                    label: const Text(
+                      'Mở Cẩm Nang & Checklist Sắm Lễ',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -378,7 +425,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // MỤC 2C: CÀI ĐẶT NHẮC NHỞ & THÔNG BÁO TỰ ĐỘNG
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -386,10 +435,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.notifications_active_outlined, color: Colors.deepOrange),
+                      const Icon(
+                        Icons.notifications_active_outlined,
+                        color: Colors.deepOrange,
+                      ),
                       const SizedBox(width: 8),
                       const Expanded(
-                        child: Text('Thông Báo & Nhắc Nhở Tự Động', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        child: Text(
+                          'Thông Báo & Nhắc Nhở Tự Động',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                       Switch(
                         value: _remindersEnabled,
@@ -408,7 +466,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   if (_remindersEnabled) ...[
                     const Divider(height: 24),
-                    const Text('Thời gian nhắc nhở trước:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                    const Text(
+                      'Thời gian nhắc nhở trước:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13.5,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
@@ -417,9 +481,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         return ChoiceChip(
                           label: Text('Trước $days ngày'),
                           selected: isSel,
-                          selectedColor: const Color(0xFF8B1E0F).withOpacity(0.15),
+                          selectedColor: const Color(0xFF8B1E0F)
+                              .withOpacity(0.15),
                           labelStyle: TextStyle(
-                            fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isSel
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                             color: isSel ? const Color(0xFF8B1E0F) : null,
                           ),
                           onSelected: (_) {
@@ -433,8 +500,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
                       activeColor: const Color(0xFF8B1E0F),
-                      title: const Text('Nhắc chiều trước ngày giỗ (Lễ Tiên Thường)', style: TextStyle(fontSize: 13.5)),
-                      subtitle: const Text('Nhắc thắp hương mời tiên tổ chiều hôm trước', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      title: const Text(
+                        'Nhắc chiều trước ngày giỗ (Lễ Tiên Thường)',
+                        style: TextStyle(fontSize: 13.5),
+                      ),
+                      subtitle: const Text(
+                        'Nhắc thắp hương mời tiên tổ chiều hôm trước',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                       value: _remindTienThuong,
                       onChanged: (val) {
                         setState(() => _remindTienThuong = val ?? true);
@@ -444,8 +517,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
                       activeColor: const Color(0xFF8B1E0F),
-                      title: const Text('Nhắc đúng sáng ngày diễn ra (Lễ Chính Kỵ)', style: TextStyle(fontSize: 13.5)),
-                      subtitle: const Text('Nhắc làm mâm cúng sáng ngày giỗ / chúc mừng sinh nhật', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      title: const Text(
+                        'Nhắc đúng sáng ngày diễn ra (Lễ Chính Kỵ)',
+                        style: TextStyle(fontSize: 13.5),
+                      ),
+                      subtitle: const Text(
+                        'Nhắc làm mâm cúng sáng ngày giỗ / chúc mừng sinh nhật',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                       value: _remindChinhKy,
                       onChanged: (val) {
                         setState(() => _remindChinhKy = val ?? true);
@@ -461,7 +540,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // MỤC 3: SAO LƯU & PHỤC HỒI QUA TỆP (.JSON)
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -471,13 +552,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: const [
                       Icon(Icons.folder_zip_outlined, color: Colors.teal),
                       SizedBox(width: 8),
-                      Text('Sao Lưu & Phục Hồi Dữ Liệu (.json)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(
+                        'Sao Lưu & Phục Hồi Dữ Liệu (.json)',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Hiện có ${widget.events.length} sự kiện, ${widget.notes.length} ghi chú và ${widget.familyPeople.length} người trong gia phả. Xuất ra tệp .json để lưu trữ hoặc nạp sang máy khác nhanh chóng, tiện lợi.',
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Tệp JSON chưa mã hóa và có thể chứa thông tin người thân. Chỉ lưu ở nơi riêng tư.',
+                    style: TextStyle(fontSize: 12, color: Colors.deepOrange),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -488,10 +580,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             backgroundColor: const Color(0xFF1B5E20),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
-                          icon: const Icon(Icons.file_download_outlined, size: 20),
-                          label: const Text('Xuất Tệp .json', style: TextStyle(fontWeight: FontWeight.bold)),
+                          icon: const Icon(
+                            Icons.file_download_outlined,
+                            size: 20,
+                          ),
+                          label: const Text(
+                            'Xuất Tệp .json',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           onPressed: _exportBackupFile,
                         ),
                       ),
@@ -502,10 +602,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             backgroundColor: const Color(0xFF0D47A1),
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
-                          icon: const Icon(Icons.file_upload_outlined, size: 20),
-                          label: const Text('Chọn Tệp Nạp', style: TextStyle(fontWeight: FontWeight.bold)),
+                          icon: const Icon(
+                            Icons.file_upload_outlined,
+                            size: 20,
+                          ),
+                          label: const Text(
+                            'Chọn Tệp Nạp',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           onPressed: _importBackupFile,
                         ),
                       ),
@@ -515,13 +623,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton.icon(
-                      icon: const Icon(Icons.code, size: 16, color: Colors.blueGrey),
-                      label: const Text('Tùy chọn: Sao chép / Dán mã JSON thủ công', style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                      icon: const Icon(
+                        Icons.code,
+                        size: 16,
+                        color: Colors.blueGrey,
+                      ),
+                      label: const Text(
+                        'Tùy chọn: Sao chép / Dán mã JSON thủ công',
+                        style: TextStyle(fontSize: 12, color: Colors.blueGrey),
+                      ),
                       onPressed: () {
                         showModalBottomSheet(
                           context: context,
                           shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(16),
+                            ),
                           ),
                           builder: (ctx) => SafeArea(
                             child: Padding(
@@ -530,21 +647,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('Sao Lưu / Phục Hồi Bằng Mã Văn Bản', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                  const Text(
+                                    'Sao Lưu / Phục Hồi Bằng Mã Văn Bản',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
                                   const SizedBox(height: 12),
                                   ListTile(
-                                    leading: const Icon(Icons.copy_all, color: Colors.teal),
+                                    leading: const Icon(
+                                      Icons.copy_all,
+                                      color: Colors.teal,
+                                    ),
                                     title: const Text('Xem & Sao chép mã JSON'),
-                                    subtitle: const Text('Dành cho máy không hỗ trợ tải tệp'),
+                                    subtitle: const Text(
+                                      'Dành cho máy không hỗ trợ tải tệp',
+                                    ),
                                     onTap: () {
                                       Navigator.pop(ctx);
                                       _showBackupDialog();
                                     },
                                   ),
                                   ListTile(
-                                    leading: const Icon(Icons.paste, color: Colors.blue),
-                                    title: const Text('Dán mã JSON để phục hồi'),
-                                    subtitle: const Text('Dán nội dung sao lưu từ bộ nhớ tạm'),
+                                    leading: const Icon(
+                                      Icons.paste,
+                                      color: Colors.blue,
+                                    ),
+                                    title: const Text(
+                                      'Dán mã JSON để phục hồi',
+                                    ),
+                                    subtitle: const Text(
+                                      'Dán nội dung sao lưu từ bộ nhớ tạm',
+                                    ),
                                     onTap: () {
                                       Navigator.pop(ctx);
                                       _showRestoreDialog();
@@ -564,7 +699,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           // MỤC 4: ĐỒNG BỘ ĐÁM MÂY (GOOGLE CLOUD & FIREBASE)
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -577,27 +714,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const Expanded(
                         child: Text(
                           'Đồng Bộ Đám Mây (Google Cloud)',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: _googleUserEmail != null
                               ? Colors.green.withOpacity(0.12)
                               : Colors.orange.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: _googleUserEmail != null ? Colors.green : Colors.orange,
+                            color: _googleUserEmail != null
+                                ? Colors.green
+                                : Colors.orange,
                             width: 0.8,
                           ),
                         ),
                         child: Text(
-                          _googleUserEmail != null ? 'Đã liên kết' : 'Ngoại tuyến',
+                          _googleUserEmail != null
+                              ? 'Đã liên kết'
+                              : 'Ngoại tuyến',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: _googleUserEmail != null ? Colors.green.shade800 : Colors.orange.shade900,
+                            color: _googleUserEmail != null
+                                ? Colors.green.shade800
+                                : Colors.orange.shade900,
                           ),
                         ),
                       ),
@@ -606,9 +755,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 10),
                   Text(
                     _googleUserEmail != null
-                        ? 'Tài khoản Google: $_googleUserEmail\nCác thay đổi trên thiết bị không tự tải lên. Chỉ tải lên hoặc kéo về khi bạn bấm nút tương ứng và Firestore đã được cấu hình an toàn.'
-                        : 'Dữ liệu hiện được lưu trên thiết bị. Đăng nhập Google là bước chuẩn bị để đồng bộ thủ công sau khi Firestore được cấu hình an toàn.',
-                    style: const TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
+                        ? 'Tài khoản Google: $_googleUserEmail\nDữ liệu trên thiết bị không tự tải lên. Quyền truy cập đám mây do chủ gia tộc cấp theo email; hãy bấm tải lên hoặc kéo về khi cần.'
+                        : 'Dữ liệu hiện được lưu trên thiết bị. Đăng nhập Google để dùng đồng bộ thủ công sau khi Firestore được cấu hình an toàn.',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey,
+                      height: 1.4,
+                    ),
                   ),
                   const SizedBox(height: 14),
 
@@ -618,11 +771,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.indigo.shade800,
                         side: BorderSide(color: Colors.indigo.shade300),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       icon: const Icon(Icons.account_circle_outlined, size: 20),
-                      label: const Text('Đăng Nhập Bằng Google Để Đồng Bộ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Đăng Nhập Bằng Google Để Đồng Bộ',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       onPressed: _signInWithGoogle,
                     )
                   else
@@ -632,21 +793,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           radius: 14,
                           backgroundColor: Colors.indigo.shade100,
                           child: Text(
-                            (_googleUserName?.isNotEmpty == true ? _googleUserName![0] : 'G').toUpperCase(),
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.indigo),
+                            (_googleUserName?.isNotEmpty == true
+                                    ? _googleUserName![0]
+                                    : 'G')
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _googleUserName ?? _googleUserEmail!,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         TextButton(
                           onPressed: _signOutGoogle,
-                          child: const Text('Đăng Xuất', style: TextStyle(color: Colors.red, fontSize: 12)),
+                          child: const Text(
+                            'Đăng Xuất',
+                            style: TextStyle(color: Colors.red, fontSize: 12),
+                          ),
                         ),
                       ],
                     ),
@@ -656,14 +830,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // Mã kết nối gia đình (Family Sync Code)
                   Row(
                     children: const [
-                      Icon(Icons.vpn_key_outlined, size: 18, color: Colors.indigo),
+                      Icon(
+                        Icons.vpn_key_outlined,
+                        size: 18,
+                        color: Colors.indigo,
+                      ),
                       SizedBox(width: 6),
-                      Text('Mã Kết Nối Gia Tộc (Family Sync Code):', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      Text(
+                        'Mã Kết Nối Gia Tộc (Family Sync Code):',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Dùng chung mã này trên máy của Vợ/Chồng để cả hai máy cùng kết nối vào một cây gia phả.',
+                    'Mã chỉ xác định gia tộc; người thân còn phải đăng nhập bằng email được chủ gia tộc cấp quyền.',
                     style: TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
@@ -674,9 +858,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           controller: _syncCodeController,
                           textCapitalization: TextCapitalization.characters,
                           decoration: InputDecoration(
-                            hintText: 'VD: LE-GIA-TOC-2026',
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                            hintText: 'FAM-... (bấm Tạo Mã Mới)',
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             suffixIcon: IconButton(
                               icon: const Icon(Icons.copy, size: 18),
                               tooltip: 'Sao chép mã gửi cho Vợ/Chồng',
@@ -685,22 +874,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 if (code.isNotEmpty) {
                                   Clipboard.setData(ClipboardData(text: code));
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Đã sao chép mã "$code"! Hãy gửi cho vợ/chồng.')),
+                                    const SnackBar(
+                                      content: Text(
+                                        'Đã sao chép mã. Chỉ gửi cho người đã được cấp quyền xem.',
+                                      ),
+                                    ),
                                   );
                                 }
                               },
                             ),
                           ),
                           onChanged: (val) {
-                            widget.storageService.saveFamilySyncCode(val.trim().toUpperCase());
+                            widget.storageService.saveFamilySyncCode(
+                              val.trim().toUpperCase(),
+                            );
                           },
                         ),
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         onPressed: _generateRandomSyncCode,
                         child: const Text('Tạo Mã Mới'),
@@ -716,88 +916,77 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         foregroundColor: const Color(0xFF8B1E0F),
                         side: const BorderSide(color: Color(0xFF8B1E0F)),
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       icon: const Icon(Icons.share, size: 18),
-                      label: const Text('Sao Chép Lời Mời Gia Tộc Gửi Zalo', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Sao Chép Lời Mời Gia Tộc Gửi Zalo',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       onPressed: _shareFamilyInvite,
                     ),
                   ),
 
                   const SizedBox(height: 14),
 
-                  // Phân quyền vai trò trong dòng họ
+                  // Quyền trên đám mây được kiểm tra bằng tài khoản Google và Firestore Rules.
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDark ? Colors.white10 : Colors.indigo.shade50.withOpacity(0.5),
+                      color: isDark
+                          ? Colors.white10
+                          : Colors.indigo.shade50.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.indigo.shade200),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
+                        const Row(
                           children: [
-                            const Icon(Icons.shield_outlined, size: 18, color: Colors.indigo),
-                            const SizedBox(width: 6),
-                            const Text('Vai Trò Trong Họ:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: _userRole == 'admin' ? const Color(0xFF8B1E0F) : Colors.teal,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                _userRole == 'admin' ? 'Trưởng họ (Toàn quyền)' : 'Con cháu (Xem an toàn)',
-                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            Icon(
+                              Icons.shield_outlined,
+                              size: 18,
+                              color: Colors.indigo,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Quyền truy cập đám mây',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _userRole == 'admin'
-                              ? 'Bạn có toàn quyền chỉnh sửa gia phả, thêm sự kiện và tải lên đám mây.'
-                              : 'Chế độ xem an toàn giúp bảo vệ dữ liệu gia tộc, tránh vô tình sửa đổi.',
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: _userRole == 'admin' ? const Color(0xFF8B1E0F) : null,
-                                  foregroundColor: _userRole == 'admin' ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
-                                  side: BorderSide(color: _userRole == 'admin' ? const Color(0xFF8B1E0F) : Colors.grey.shade400),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                                onPressed: () {
-                                  setState(() => _userRole = 'admin');
-                                  widget.storageService.saveUserRole('admin');
-                                },
-                                child: const Text('Trưởng họ (Admin)'),
-                              ),
+                        const Text(
+                          'Người tạo dữ liệu đám mây là chủ gia tộc và được tải lên. Email được mời chỉ được kéo dữ liệu về; chọn vai trò trên thiết bị không thể thay đổi quyền này.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _memberEmailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(
+                            labelText: 'Email Google của người thân',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(
+                              Icons.person_add_alt_1_outlined,
+                              size: 18,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: _userRole == 'member' ? Colors.teal : null,
-                                  foregroundColor: _userRole == 'member' ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
-                                  side: BorderSide(color: _userRole == 'member' ? Colors.teal : Colors.grey.shade400),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                ),
-                                onPressed: () {
-                                  setState(() => _userRole = 'member');
-                                  widget.storageService.saveUserRole('member');
-                                },
-                                child: const Text('Con cháu (Thành viên)'),
-                              ),
-                            ),
-                          ],
+                            label: const Text('Cấp quyền xem'),
+                            onPressed: _isSyncing ? null : _inviteViewer,
+                          ),
                         ),
                       ],
                     ),
@@ -805,22 +994,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   const SizedBox(height: 14),
 
-                  // Cấu hình Firebase & Hướng dẫn Google Cloud
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextButton.icon(
-                          icon: const Icon(Icons.settings_suggest_outlined, size: 16),
-                          label: const Text('Cấu Hình Khóa Firebase Riêng', style: TextStyle(fontSize: 12)),
-                          onPressed: _showCustomFirebaseDialog,
-                        ),
-                      ),
-                      TextButton.icon(
-                        icon: const Icon(Icons.help_outline, size: 16, color: Colors.blue),
-                        label: const Text('Hướng Dẫn', style: TextStyle(fontSize: 12, color: Colors.blue)),
-                        onPressed: _showFirebaseGuideDialog,
-                      ),
-                    ],
+                  TextButton.icon(
+                    icon: const Icon(
+                      Icons.help_outline,
+                      size: 16,
+                      color: Colors.blue,
+                    ),
+                    label: const Text(
+                      'Hướng dẫn đồng bộ an toàn',
+                      style: TextStyle(fontSize: 12, color: Colors.blue),
+                    ),
+                    onPressed: _showFirebaseGuideDialog,
                   ),
 
                   const SizedBox(height: 10),
@@ -834,12 +1018,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             backgroundColor: Colors.indigo.shade700,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                           icon: _isSyncing
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : const Icon(Icons.cloud_upload_outlined, size: 18),
-                          label: const Text('Tải Lên Đám Mây', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.cloud_upload_outlined,
+                                  size: 18,
+                                ),
+                          label: const Text(
+                            'Tải Lên Đám Mây',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           onPressed: _isSyncing ? null : _uploadToCloud,
                         ),
                       ),
@@ -850,12 +1049,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             backgroundColor: Colors.teal.shade700,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                           icon: _isSyncing
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                              : const Icon(Icons.cloud_download_outlined, size: 18),
-                          label: const Text('Kéo Về Từ Đám Mây', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.cloud_download_outlined,
+                                  size: 18,
+                                ),
+                          label: const Text(
+                            'Kéo Về Từ Đám Mây',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           onPressed: _isSyncing ? null : _downloadFromCloud,
                         ),
                       ),
@@ -866,7 +1080,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'Lần đồng bộ gần nhất: ${_lastSyncTime!.hour.toString().padLeft(2, '0')}:${_lastSyncTime!.minute.toString().padLeft(2, '0')} ngày ${_lastSyncTime!.day}/${_lastSyncTime!.month}/${_lastSyncTime!.year}',
-                      style: const TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ],
                 ],
@@ -877,7 +1095,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // MỤC 5: GIỚI THIỆU
           Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -887,13 +1107,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: const [
                       Icon(Icons.info_outline, color: Colors.blueGrey),
                       SizedBox(width: 8),
-                      Text('Giới Thiệu Ứng Dụng', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(
+                        'Giới Thiệu Ứng Dụng',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   const Text(
                     'Sự Kiện Gia Tộc\n'
-                    'Phiên bản 1.3.0 (Gia phả & Lịch âm dương)\n\n'
+                    'Phiên bản 1.4.0 (Bảo vệ dữ liệu gia tộc)\n\n'
                     '• Thuật toán Âm Lịch Việt Nam chuẩn GMT+7 (TS. Hồ Ngọc Đức)\n'
                     '• Tính Giờ Hoàng Đạo, Can Chi, Tiết Khí 24 tiết\n'
                     '• Bố cục tương thích cả Máy Tính (Desktop) và Điện Thoại (Mobile)\n'
@@ -911,7 +1137,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       TextButton(
                         onPressed: () async {
                           await launchUrl(
-                            Uri.parse('https://leducanh0911.github.io/su-kien-gia-toc/privacy.html'),
+                            Uri.parse(
+                              'https://leducanh0911.github.io/su-kien-gia-toc/privacy.html',
+                            ),
                             mode: LaunchMode.externalApplication,
                           );
                         },
@@ -920,7 +1148,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       TextButton(
                         onPressed: () async {
                           await launchUrl(
-                            Uri.parse('https://leducanh0911.github.io/su-kien-gia-toc/terms.html'),
+                            Uri.parse(
+                              'https://leducanh0911.github.io/su-kien-gia-toc/terms.html',
+                            ),
                             mode: LaunchMode.externalApplication,
                           );
                         },
@@ -960,7 +1190,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       buffer.writeln('${i + 1}. ${ev.title}');
       buffer.writeln('   • Ngày Âm lịch: Ngày ${ev.day} tháng ${ev.month} Âm');
       if (ev.personName != null && ev.personName!.isNotEmpty) {
-        buffer.writeln('   • Người được tưởng nhớ: ${ev.personName} (${ev.relation ?? ""})');
+        buffer.writeln(
+          '   • Người được tưởng nhớ: ${ev.personName} (${ev.relation ?? ""})',
+        );
       }
       if (ev.year != null) {
         buffer.writeln('   • Năm: ${ev.year}');
@@ -980,12 +1212,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Sự Kiện Gia Tộc Trong Năm', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: const Text(
+          'Sự Kiện Gia Tộc Trong Năm',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Nội dung tổng hợp có thể sao chép để gửi vào nhóm Zalo gia đình:'),
+            const Text(
+              'Nội dung tổng hợp có thể sao chép để gửi vào nhóm Zalo gia đình:',
+            ),
             const SizedBox(height: 10),
             Container(
               height: 220,
@@ -996,13 +1233,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 border: Border.all(color: Colors.black12),
               ),
               child: SingleChildScrollView(
-                child: SelectableText(text, style: const TextStyle(fontSize: 12, height: 1.4)),
+                child: SelectableText(
+                  text,
+                  style: const TextStyle(fontSize: 12, height: 1.4),
+                ),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đóng'),
+          ),
           ElevatedButton.icon(
             icon: const Icon(Icons.copy, size: 16),
             label: const Text('Sao Chép Bản Tin Zalo'),
@@ -1014,7 +1257,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Clipboard.setData(ClipboardData(text: text));
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Đã sao chép Sự Kiện Gia Tộc! Bạn có thể dán vào Zalo ngay.')),
+                const SnackBar(
+                  content: Text(
+                    'Đã sao chép Sự Kiện Gia Tộc! Bạn có thể dán vào Zalo ngay.',
+                  ),
+                ),
               );
             },
           ),
@@ -1031,6 +1278,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       isDarkMode: widget.profile.isDarkMode,
     );
     widget.onProfileUpdated(updated);
+  }
+
+  Future<bool> _backupCurrentData() async {
+    final jsonStr = await widget.storageService.exportBackupData(
+      widget.events,
+      widget.notes,
+      widget.profile,
+      widget.familyPeople,
+    );
+    if (!mounted) return false;
+    return BackupFileService.exportBackupFile(
+      context: context,
+      jsonContent: jsonStr,
+    );
   }
 
   void _showBackupDialog() async {
@@ -1051,7 +1312,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Bản sao lưu JSON gồm sự kiện, ghi chú và gia phả:'),
+            const Text(
+              'Bản sao lưu JSON chưa mã hóa, gồm sự kiện, ghi chú và gia phả. Đừng dán lên kênh công khai:',
+            ),
             const SizedBox(height: 10),
             Container(
               height: 160,
@@ -1061,13 +1324,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SingleChildScrollView(
-                child: SelectableText(jsonStr, style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
+                child: SelectableText(
+                  jsonStr,
+                  style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                ),
               ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đóng'),
+          ),
           ElevatedButton.icon(
             icon: const Icon(Icons.copy, size: 16),
             label: const Text('Sao Chép Tất Cả'),
@@ -1075,7 +1344,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Clipboard.setData(ClipboardData(text: jsonStr));
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Đã sao chép dữ liệu sao lưu vào bộ nhớ tạm!')),
+                const SnackBar(
+                  content: Text('Đã sao chép dữ liệu sao lưu vào bộ nhớ tạm!'),
+                ),
               );
             },
           ),
@@ -1107,7 +1378,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
           ElevatedButton(
             onPressed: () async {
               final text = restoreController.text.trim();
@@ -1116,16 +1390,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   final data = widget.storageService.parseBackupData(text);
                   final List<EventItem> restoredEvents = data['events'] ?? [];
                   final List<DailyNoteItem> restoredNotes = data['notes'] ?? [];
-                  final List<FamilyPerson> restoredFamily = data['hasFamilyPeople'] == true
-                      ? (data['familyPeople'] as List<FamilyPerson>) : widget.familyPeople;
+                  final List<FamilyPerson> restoredFamily =
+                      data['hasFamilyPeople'] == true
+                      ? (data['familyPeople'] as List<FamilyPerson>)
+                      : widget.familyPeople;
+
+                  final backedUp = await _backupCurrentData();
+                  if (!mounted || !backedUp) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Chưa lưu được dữ liệu hiện tại nên chưa phục hồi.',
+                          ),
+                        ),
+                      );
+                    }
+                    return;
+                  }
 
                   await widget.storageService.saveEvents(restoredEvents);
                   await widget.storageService.saveNotes(restoredNotes);
                   if (data['hasFamilyPeople'] == true) {
-                    await widget.storageService.saveFamilyPeople(restoredFamily);
+                    await widget.storageService.saveFamilyPeople(
+                      restoredFamily,
+                    );
                   }
 
-                  widget.onDataRestored(restoredEvents, restoredNotes, restoredFamily);
+                  widget.onDataRestored(
+                    restoredEvents,
+                    restoredNotes,
+                    restoredFamily,
+                  );
                   if (context.mounted) {
                     Navigator.pop(ctx);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1139,7 +1435,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Mã sao lưu không hợp lệ! Vui lòng kiểm tra lại.')),
+                      const SnackBar(
+                        content: Text(
+                          'Mã sao lưu không hợp lệ! Vui lòng kiểm tra lại.',
+                        ),
+                      ),
                     );
                   }
                 }
@@ -1206,12 +1506,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: const [
               Icon(Icons.file_upload, color: Color(0xFF0D47A1)),
               SizedBox(width: 8),
-              Text('Xác Nhận Nạp Tệp', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+              Text(
+                'Xác Nhận Nạp Tệp',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              ),
             ],
           ),
           content: Column(
@@ -1231,14 +1536,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('• 📅 Sự kiện / Ngày giỗ: ${restoredEvents.length} mục', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(
+                      '• 📅 Sự kiện / Ngày giỗ: ${restoredEvents.length} mục',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(height: 4),
-                    Text('• 📝 Ghi chú: ${restoredNotes.length} mục', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(
+                      '• 📝 Ghi chú: ${restoredNotes.length} mục',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(height: 4),
-                    Text('• 🌳 Thành viên gia phả: ${restoredFamily.length} người', style: const TextStyle(fontWeight: FontWeight.w600)),
-                    if (restoredProfile != null && restoredProfile.giaChu.isNotEmpty) ...[
+                    Text(
+                      '• 🌳 Thành viên gia phả: ${restoredFamily.length} người',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (restoredProfile != null &&
+                        restoredProfile.giaChu.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text('• 👤 Gia chủ: ${restoredProfile.giaChu}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                      Text(
+                        '• 👤 Gia chủ: ${restoredProfile.giaChu}',
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ],
                 ),
@@ -1246,7 +1564,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 12),
               const Text(
                 'Lưu ý: Dữ liệu hiện tại trên thiết bị sẽ được cập nhật đồng bộ theo tệp sao lưu này.',
-                style: TextStyle(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.orange,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -1262,6 +1584,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               onPressed: () async {
                 Navigator.pop(ctx);
+                final backedUp = await _backupCurrentData();
+                if (!mounted || !backedUp) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Chưa lưu được dữ liệu hiện tại nên chưa nạp tệp.',
+                        ),
+                      ),
+                    );
+                  }
+                  return;
+                }
                 await widget.storageService.saveEvents(restoredEvents);
                 await widget.storageService.saveNotes(restoredNotes);
                 if (data['hasFamilyPeople'] == true) {
@@ -1274,7 +1609,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   _diaChiController.text = restoredProfile.diaChi;
                 }
 
-                widget.onDataRestored(restoredEvents, restoredNotes, restoredFamily);
+                widget.onDataRestored(
+                  restoredEvents,
+                  restoredNotes,
+                  restoredFamily,
+                );
 
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1344,14 +1683,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _generateRandomSyncCode() {
-    final rand = Random().nextInt(9000) + 1000;
-    final code = 'LE-GIA-TOC-$rand';
+    final code = FamilySyncCode.generate();
     setState(() {
       _syncCodeController.text = code;
     });
     widget.storageService.saveFamilySyncCode(code);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã tạo mã kết nối mới: $code')),
+      const SnackBar(
+        content: Text(
+          'Đã tạo mã gia tộc mới. Chủ gia tộc cần tải dữ liệu lên trước khi mời người thân.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _inviteViewer() async {
+    setState(() => _isSyncing = true);
+    final result = await FirebaseSyncService().grantViewerAccess(
+      _syncCodeController.text,
+      _memberEmailController.text,
+    );
+    if (!mounted) return;
+    setState(() => _isSyncing = false);
+    if (result.success) _memberEmailController.clear();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: result.success
+            ? Colors.green.shade800
+            : Colors.orange.shade900,
+        content: Text(result.message),
+      ),
     );
   }
 
@@ -1359,7 +1720,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final code = _syncCodeController.text.trim().toUpperCase();
     if (code.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập Mã kết nối gia đình trước khi tải lên.')),
+        const SnackBar(
+          content: Text('Vui lòng nhập Mã kết nối gia đình trước khi tải lên.'),
+        ),
       );
       return;
     }
@@ -1388,7 +1751,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: Colors.indigo.shade800,
-            content: Text('Đã đồng bộ lên đám mây thành công cho mã "$code"!'),
+            content: Text(res.message),
           ),
         );
       } else {
@@ -1406,7 +1769,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final code = _syncCodeController.text.trim().toUpperCase();
     if (code.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập Mã kết nối gia đình cần kéo dữ liệu.')),
+        const SnackBar(
+          content: Text('Vui lòng nhập Mã kết nối gia đình cần kéo dữ liệu.'),
+        ),
       );
       return;
     }
@@ -1443,7 +1808,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: const [
             Icon(Icons.cloud_download, color: Colors.teal),
             SizedBox(width: 8),
-            Text('Đồng Bộ Từ Đám Mây', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            Text(
+              'Đồng Bộ Từ Đám Mây',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            ),
           ],
         ),
         content: Column(
@@ -1463,22 +1831,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('• 📅 Sự kiện / Ngày giỗ: ${restoredEvents.length} mục', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(
+                    '• 📅 Sự kiện / Ngày giỗ: ${restoredEvents.length} mục',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 4),
-                  Text('• 📝 Ghi chú: ${restoredNotes.length} mục', style: const TextStyle(fontWeight: FontWeight.w600)),
+                  Text(
+                    '• 📝 Ghi chú: ${restoredNotes.length} mục',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 4),
-                  Text('• 🌳 Thành viên gia phả: ${restoredFamily.length} người', style: const TextStyle(fontWeight: FontWeight.w600)),
-                  if (restoredProfile != null && restoredProfile.giaChu.isNotEmpty) ...[
+                  Text(
+                    '• 🌳 Thành viên gia phả: ${restoredFamily.length} người',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  if (restoredProfile != null &&
+                      restoredProfile.giaChu.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text('• 👤 Gia chủ: ${restoredProfile.giaChu}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(
+                      '• 👤 Gia chủ: ${restoredProfile.giaChu}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ],
                 ],
               ),
             ),
             const SizedBox(height: 12),
             const Text(
-              'Cập nhật dữ liệu thiết bị theo bản ghi mới nhất từ người thân trên đám mây?',
-              style: TextStyle(fontSize: 12, color: Colors.blueGrey, fontWeight: FontWeight.w500),
+              'Thao tác này thay dữ liệu đang có trên thiết bị. Ứng dụng sẽ xuất một bản sao lưu trước khi cập nhật.',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.blueGrey,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -1494,6 +1879,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             onPressed: () async {
               Navigator.pop(ctx);
+              final backupJson = await widget.storageService.exportBackupData(
+                widget.events,
+                widget.notes,
+                widget.profile,
+                widget.familyPeople,
+              );
+              if (!mounted) return;
+              final backupSaved = await BackupFileService.exportBackupFile(
+                context: context,
+                jsonContent: backupJson,
+              );
+              if (!mounted) return;
+              if (!backupSaved) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Chưa lưu được bản sao lưu nên dữ liệu trên thiết bị chưa thay đổi.',
+                    ),
+                  ),
+                );
+                return;
+              }
               await widget.storageService.saveEvents(restoredEvents);
               await widget.storageService.saveNotes(restoredNotes);
               await widget.storageService.saveFamilyPeople(restoredFamily);
@@ -1507,8 +1914,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _lastSyncTime = DateTime.now();
               await widget.storageService.saveLastSyncTime(_lastSyncTime!);
               await widget.storageService.saveFamilySyncCode(code);
+              await widget.storageService.saveSyncRevision(
+                code,
+                data['revision'] as int,
+              );
 
-              widget.onDataRestored(restoredEvents, restoredNotes, restoredFamily);
+              widget.onDataRestored(
+                restoredEvents,
+                restoredNotes,
+                restoredFamily,
+              );
 
               if (mounted) {
                 setState(() {});
@@ -1529,124 +1944,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _shareFamilyInvite() {
-    final code = _syncCodeController.text.trim();
-    if (code.isEmpty) {
+  Future<void> _shareFamilyInvite() async {
+    final code = FamilySyncCode.normalize(_syncCodeController.text);
+    if (!FamilySyncCode.isValid(code)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập Mã kết nối gia tộc trước khi chia sẻ.')),
+        const SnackBar(
+          content: Text('Hãy tạo mã gia tộc hợp lệ trước khi chia sẻ.'),
+        ),
       );
       return;
     }
-    final inviteText = 'Kính gửi bà con dòng họ!\n\n'
+    if (await widget.storageService.loadSyncRevision(code) == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Hãy tải hoặc kéo dữ liệu gia tộc thành công trước khi chia sẻ lời mời.',
+          ),
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
+    final inviteText =
+        'Kính gửi bà con dòng họ!\n\n'
         'Mời mọi người cùng tham gia xem Cây Gia Phả & Lịch Giỗ trực tuyến của dòng họ ta:\n'
         '👉 Mở ứng dụng ngay: https://leducanh0911.github.io/su-kien-gia-toc/?family=$code\n'
         '🔑 Mã kết nối gia tộc: $code\n\n'
-        'Bà con chỉ cần bấm vào liên kết trên để xem toàn bộ phả hệ các đời và nhận thông báo các ngày giỗ trong năm!';
+        'Chủ gia tộc cần cấp quyền xem cho email Google của người nhận. Sau khi đăng nhập đúng email đó, mở Cài đặt và bấm Kéo Về Từ Đám Mây. Mã hoặc liên kết không tự cấp quyền truy cập.';
     Clipboard.setData(ClipboardData(text: inviteText));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Đã sao chép Lời Mời Gia Tộc kèm link! Hãy dán vào nhóm Zalo dòng họ.'),
+        content: Text(
+          'Đã sao chép lời mời. Chỉ gửi cho người được chủ gia tộc cấp quyền xem.',
+        ),
         backgroundColor: Color(0xFF8B1E0F),
-      ),
-    );
-  }
-
-  void _showCustomFirebaseDialog() async {
-    final currentConfig = await widget.storageService.loadCustomFirebaseConfig();
-    final apiKeyCtrl = TextEditingController(text: currentConfig?['apiKey'] ?? '');
-    final projectIdCtrl = TextEditingController(text: currentConfig?['projectId'] ?? '');
-    final appIdCtrl = TextEditingController(text: currentConfig?['appId'] ?? '');
-
-    if (!mounted) return;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: const [
-            Icon(Icons.cloud_circle_outlined, color: Colors.indigo),
-            SizedBox(width: 8),
-            Text('Cấu Hình Firebase Riêng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Nhập thông số dự án Firebase / Google Cloud của bạn để đồng bộ dữ liệu vào đám mây riêng của gia đình:',
-                style: TextStyle(fontSize: 13, color: Colors.grey),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: apiKeyCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'API Key (apiKey)',
-                  hintText: 'VD: AIzaSy...',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: projectIdCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Project ID (projectId)',
-                  hintText: 'VD: su-kien-gia-toc',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: appIdCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'App ID (appId - Tùy chọn)',
-                  hintText: 'VD: 1:123456789:web:...',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
-            onPressed: () async {
-              final apiKey = apiKeyCtrl.text.trim();
-              final projectId = projectIdCtrl.text.trim();
-              if (apiKey.isEmpty || projectId.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Vui lòng nhập tối thiểu API Key và Project ID.')),
-                );
-                return;
-              }
-              Navigator.pop(ctx);
-              final cfg = {
-                'apiKey': apiKey,
-                'projectId': projectId,
-                'appId': appIdCtrl.text.trim(),
-              };
-              await FirebaseSyncService().reinitializeWithCustomConfig(cfg);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Đã cập nhật cấu hình Firebase dự án của bạn thành công!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-            },
-            child: const Text('Lưu & Áp Dụng'),
-          ),
-        ],
       ),
     );
   }
@@ -1660,7 +1992,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: const [
             Icon(Icons.menu_book_outlined, color: Color(0xFF8B1E0F)),
             SizedBox(width: 8),
-            Text('Hướng Dẫn Đồng Bộ An Toàn', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              'Hướng Dẫn Đồng Bộ An Toàn',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
           ],
         ),
         content: SingleChildScrollView(
@@ -1670,7 +2005,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: const [
               Text(
                 'Trước khi đồng bộ dữ liệu gia tộc:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF8B1E0F)),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: Color(0xFF8B1E0F),
+                ),
               ),
               SizedBox(height: 12),
               Text(
@@ -1679,12 +2018,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               SizedBox(height: 10),
               Text(
-                '2. Chỉ dùng Cloud Firestore sau khi quy tắc bảo mật giới hạn quyền đọc và ghi cho đúng thành viên gia tộc. Không mở quyền truy cập công khai hoặc cho mọi tài khoản đã đăng nhập. Nếu Firestore chưa được tạo và cấu hình, các nút tải lên/kéo về sẽ không hoạt động.',
+                '2. Chủ gia tộc tạo mã mới rồi tải dữ liệu lên. Người thân chỉ được kéo về sau khi chủ gia tộc cấp quyền xem cho đúng email Google của họ. Quyền này được kiểm tra trên Firestore, không phụ thuộc mã mời.',
                 style: TextStyle(fontSize: 12.5, height: 1.4),
               ),
               SizedBox(height: 10),
               Text(
-                '3. Ứng dụng đã có cấu hình Firebase của dự án này. Mục "Cấu Hình Khóa Firebase Riêng" chỉ dành cho người quản trị dùng dự án Firebase khác. Hãy giữ bản sao lưu dữ liệu trên thiết bị trước khi đồng bộ.',
+                '3. Cloud Firestore phải được tạo và áp dụng quy tắc bảo mật của dự án trước khi dùng. Không mở quyền công khai. Trước khi kéo bản đám mây về, hãy giữ bản sao lưu dữ liệu trên thiết bị.',
                 style: TextStyle(fontSize: 12.5, height: 1.4),
               ),
             ],
@@ -1692,7 +2031,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actions: [
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B1E0F), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B1E0F),
+              foregroundColor: Colors.white,
+            ),
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Đã Hiểu'),
           ),

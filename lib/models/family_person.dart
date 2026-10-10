@@ -93,7 +93,7 @@ class FamilyPerson {
     String? avatarBase64,
     bool clearAvatar = false,
   }) => FamilyPerson(
-    id: id ?? this.id,
+    id: id,
     name: name ?? this.name,
     gender: gender ?? this.gender,
     branch: branch ?? this.branch,

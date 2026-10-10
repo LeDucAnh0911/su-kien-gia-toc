@@ -1,6 +1,7 @@
 /// Ứng dụng Sổ Giỗ & Kỷ Niệm (Lịch Gia Tộc & Ghi Chú)
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+
 import 'lunar_engine.dart';
 import 'models/event_model.dart';
 import 'models/note_model.dart';
@@ -11,6 +12,7 @@ import 'screens/prayers_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/family_screen.dart';
 import 'services/storage_service.dart';
+import 'services/family_sync_code.dart';
 import 'services/firebase_sync_service.dart';
 import 'services/event_reminder_service.dart';
 
@@ -63,14 +65,16 @@ class _SoGioAppState extends State<SoGioApp> {
       _isLoading = false;
     });
 
-    final inviteCode = Uri.base.queryParameters['family'] ?? Uri.base.queryParameters['join'];
+    final inviteCode =
+        Uri.base.queryParameters['family'] ?? Uri.base.queryParameters['join'];
     if (inviteCode != null && inviteCode.trim().isNotEmpty) {
-      final code = inviteCode.trim().toUpperCase();
-      await _storageService.saveFamilySyncCode(code);
-      await _storageService.saveUserRole('member');
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _promptJoinFamily(code);
-      });
+      final code = FamilySyncCode.normalize(inviteCode);
+      if (FamilySyncCode.isValid(code)) {
+        await _storageService.saveFamilySyncCode(code);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _promptJoinFamily(code);
+        });
+      }
     }
   }
 
@@ -84,14 +88,19 @@ class _SoGioAppState extends State<SoGioApp> {
           children: const [
             Icon(Icons.diversity_3, color: Color(0xFF8B1E0F)),
             SizedBox(width: 8),
-            Text('Lời Mời Gia Tộc', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text(
+              'Lời Mời Gia Tộc',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Bạn nhận được lời mời tham gia dòng họ với Mã kết nối:'),
+            const Text(
+              'Bạn nhận được lời mời tham gia dòng họ với Mã kết nối:',
+            ),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
@@ -99,23 +108,33 @@ class _SoGioAppState extends State<SoGioApp> {
               decoration: BoxDecoration(
                 color: const Color(0xFF8B1E0F).withOpacity(0.08),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF8B1E0F).withOpacity(0.3)),
+                border: Border.all(
+                  color: const Color(0xFF8B1E0F).withOpacity(0.3),
+                ),
               ),
               child: Text(
                 code,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF8B1E0F), letterSpacing: 1.2),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: Color(0xFF8B1E0F),
+                  letterSpacing: 1.2,
+                ),
               ),
             ),
             const SizedBox(height: 10),
             const Text(
-              'Ứng dụng đã tự động liên kết mã này ở vai trò Thành viên (Con cháu). Bạn có thể xem toàn bộ cây phả hệ và ngày giỗ gia tộc!',
+              'Mã đã được lưu trên thiết bị. Để xem bản đám mây, hãy đăng nhập Google bằng email đã được chủ gia tộc cấp quyền, vào Cài đặt và bấm Kéo Về Từ Đám Mây.',
               style: TextStyle(fontSize: 13, color: Colors.grey),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Đóng'),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF8B1E0F),
@@ -123,7 +142,9 @@ class _SoGioAppState extends State<SoGioApp> {
             ),
             onPressed: () {
               Navigator.pop(ctx);
-              setState(() => _currentTabIndex = 4); // Chuyển sang Cài đặt & Dữ liệu
+              setState(
+                () => _currentTabIndex = 4,
+              ); // Chuyển sang Cài đặt & Dữ liệu
             },
             child: const Text('Xem Dữ Liệu Gia Tộc'),
           ),
@@ -172,7 +193,8 @@ class _SoGioAppState extends State<SoGioApp> {
 
   void _onFamilySaved(FamilyPerson person) {
     setState(() {
-      final next = _familyPeople.where((p) => p.id != person.id).toList()..add(person);
+      final next = _familyPeople.where((p) => p.id != person.id).toList()
+        ..add(person);
       _familyPeople = next.map((p) {
         if (p.id == person.id) return p;
         final spouses = p.spouseIds.where((id) => id != person.id).toList();
@@ -185,11 +207,16 @@ class _SoGioAppState extends State<SoGioApp> {
 
   void _onFamilyDeleted(String id) {
     setState(() {
-      _familyPeople = _familyPeople.where((p) => p.id != id).map((p) => p.copyWith(
-        fatherId: p.fatherId == id ? '' : p.fatherId,
-        motherId: p.motherId == id ? '' : p.motherId,
-        spouseIds: p.spouseIds.where((spouse) => spouse != id).toList(),
-      )).toList();
+      _familyPeople = _familyPeople
+          .where((p) => p.id != id)
+          .map(
+            (p) => p.copyWith(
+              fatherId: p.fatherId == id ? '' : p.fatherId,
+              motherId: p.motherId == id ? '' : p.motherId,
+              spouseIds: p.spouseIds.where((spouse) => spouse != id).toList(),
+            ),
+          )
+          .toList();
     });
     _storageService.saveFamilyPeople(_familyPeople);
   }
@@ -200,7 +227,11 @@ class _SoGioAppState extends State<SoGioApp> {
     _storageService.saveProfile(newProfile);
   }
 
-  void _onDataRestored(List<EventItem> newEvents, List<DailyNoteItem> newNotes, List<FamilyPerson> newFamily) {
+  void _onDataRestored(
+    List<EventItem> newEvents,
+    List<DailyNoteItem> newNotes,
+    List<FamilyPerson> newFamily,
+  ) {
     setState(() {
       _events = newEvents;
       _notes = newNotes;
@@ -315,7 +346,8 @@ class _SoGioAppState extends State<SoGioApp> {
                     onNoteAdded: _onNoteAdded,
                     onNoteUpdated: _onNoteUpdated,
                     onNoteDeleted: _onNoteDeleted,
-                    onNavigateTab: (idx) => setState(() => _currentTabIndex = idx),
+                    onNavigateTab: (idx) =>
+                        setState(() => _currentTabIndex = idx),
                   ),
 
                   // TAB 1: LỊCH THÁNG ÂM - DƯƠNG & GHI CHÚ
@@ -371,32 +403,49 @@ class _SoGioAppState extends State<SoGioApp> {
                       selectedIndex: _currentTabIndex,
                       indicatorColor: goldColor.withOpacity(0.25),
                       height: 64,
-                      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                      onDestinationSelected: (index) => setState(() => _currentTabIndex = index),
+                      labelBehavior:
+                          NavigationDestinationLabelBehavior.alwaysShow,
+                      onDestinationSelected: (index) =>
+                          setState(() => _currentTabIndex = index),
                       destinations: const [
                         NavigationDestination(
                           icon: Icon(Icons.home_outlined),
-                          selectedIcon: Icon(Icons.home, color: Color(0xFF8B1E0F)),
+                          selectedIcon: Icon(
+                            Icons.home,
+                            color: Color(0xFF8B1E0F),
+                          ),
                           label: 'Trang Chủ',
                         ),
                         NavigationDestination(
                           icon: Icon(Icons.calendar_month_outlined),
-                          selectedIcon: Icon(Icons.calendar_month, color: Color(0xFF8B1E0F)),
+                          selectedIcon: Icon(
+                            Icons.calendar_month,
+                            color: Color(0xFF8B1E0F),
+                          ),
                           label: 'Lịch Âm',
                         ),
                         NavigationDestination(
                           icon: Icon(Icons.auto_stories_outlined),
-                          selectedIcon: Icon(Icons.auto_stories, color: Color(0xFF8B1E0F)),
+                          selectedIcon: Icon(
+                            Icons.auto_stories,
+                            color: Color(0xFF8B1E0F),
+                          ),
                           label: 'Văn Khấn',
                         ),
                         NavigationDestination(
                           icon: Icon(Icons.account_tree_outlined),
-                          selectedIcon: Icon(Icons.account_tree, color: Color(0xFF8B1E0F)),
+                          selectedIcon: Icon(
+                            Icons.account_tree,
+                            color: Color(0xFF8B1E0F),
+                          ),
                           label: 'Gia Phả',
                         ),
                         NavigationDestination(
                           icon: Icon(Icons.settings_outlined),
-                          selectedIcon: Icon(Icons.settings, color: Color(0xFF8B1E0F)),
+                          selectedIcon: Icon(
+                            Icons.settings,
+                            color: Color(0xFF8B1E0F),
+                          ),
                           label: 'Cài Đặt',
                         ),
                       ],
@@ -406,9 +455,17 @@ class _SoGioAppState extends State<SoGioApp> {
 
                 // GIAO DIỆN MÁY TÍNH / MÀN HÌNH RỘNG (DESKTOP WIDESCREEN DASHBOARD)
                 final now = DateTime.now();
-                final todayLunar = VietnameseLunarEngine.solarToLunar(now.day, now.month, now.year);
-                final canChiYear = VietnameseLunarEngine.getCanChiYear(todayLunar.year);
-                final canChiDay = VietnameseLunarEngine.getCanChiDay(todayLunar.jd);
+                final todayLunar = VietnameseLunarEngine.solarToLunar(
+                  now.day,
+                  now.month,
+                  now.year,
+                );
+                final canChiYear = VietnameseLunarEngine.getCanChiYear(
+                  todayLunar.year,
+                );
+                final canChiDay = VietnameseLunarEngine.getCanChiDay(
+                  todayLunar.jd,
+                );
 
                 return Scaffold(
                   body: Row(
@@ -417,7 +474,9 @@ class _SoGioAppState extends State<SoGioApp> {
                       Container(
                         width: 270,
                         decoration: BoxDecoration(
-                          color: isDark ? const Color(0xFF1E1715) : const Color(0xFF7A180B),
+                          color: isDark
+                              ? const Color(0xFF1E1715)
+                              : const Color(0xFF7A180B),
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black26,
@@ -430,10 +489,16 @@ class _SoGioAppState extends State<SoGioApp> {
                           children: [
                             // Header Logo Cung Đình
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 24,
+                              ),
                               decoration: BoxDecoration(
                                 border: Border(
-                                  bottom: BorderSide(color: goldColor.withOpacity(0.3), width: 1),
+                                  bottom: BorderSide(
+                                    color: goldColor.withOpacity(0.3),
+                                    width: 1,
+                                  ),
                                 ),
                               ),
                               child: Row(
@@ -443,14 +508,22 @@ class _SoGioAppState extends State<SoGioApp> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: goldColor.withOpacity(0.2),
-                                      border: Border.all(color: goldColor, width: 1.5),
+                                      border: Border.all(
+                                        color: goldColor,
+                                        width: 1.5,
+                                      ),
                                     ),
-                                    child: Icon(Icons.temple_buddhist, color: goldColor, size: 26),
+                                    child: Icon(
+                                      Icons.temple_buddhist,
+                                      color: goldColor,
+                                      size: 26,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'SỰ KIỆN GIA TỘC',
@@ -464,7 +537,10 @@ class _SoGioAppState extends State<SoGioApp> {
                                         const SizedBox(height: 2),
                                         const Text(
                                           'Lịch Âm • Lễ Nghi • Hiếu Nghĩa',
-                                          style: TextStyle(color: Colors.white70, fontSize: 10.5),
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 10.5,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -480,14 +556,20 @@ class _SoGioAppState extends State<SoGioApp> {
                               decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: goldColor.withOpacity(0.25)),
+                                border: Border.all(
+                                  color: goldColor.withOpacity(0.25),
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.brightness_medium, color: goldColor, size: 14),
+                                      Icon(
+                                        Icons.brightness_medium,
+                                        color: goldColor,
+                                        size: 14,
+                                      ),
                                       const SizedBox(width: 6),
                                       Text(
                                         'HÔM NAY',
@@ -511,12 +593,18 @@ class _SoGioAppState extends State<SoGioApp> {
                                   ),
                                   Text(
                                     'Năm $canChiYear • Ngày $canChiDay',
-                                    style: const TextStyle(color: Colors.white70, fontSize: 11),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 11,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Dương lịch: ${now.day}/${now.month}/${now.year}',
-                                    style: TextStyle(color: goldColor.withOpacity(0.9), fontSize: 11),
+                                    style: TextStyle(
+                                      color: goldColor.withOpacity(0.9),
+                                      fontSize: 11,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -525,28 +613,34 @@ class _SoGioAppState extends State<SoGioApp> {
                             // Danh Sách Menu Sidebar
                             Expanded(
                               child: ListView(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 children: [
                                   _sidebarItem(
                                     icon: Icons.home,
                                     title: 'Trang Chủ Sự Kiện',
                                     badge: '${_events.length}',
                                     isSelected: _currentTabIndex == 0,
-                                    onTap: () => setState(() => _currentTabIndex = 0),
+                                    onTap: () =>
+                                        setState(() => _currentTabIndex = 0),
                                     goldColor: goldColor,
                                   ),
                                   _sidebarItem(
                                     icon: Icons.calendar_month,
                                     title: 'Lịch Âm Dương & Ghi Chú',
                                     isSelected: _currentTabIndex == 1,
-                                    onTap: () => setState(() => _currentTabIndex = 1),
+                                    onTap: () =>
+                                        setState(() => _currentTabIndex = 1),
                                     goldColor: goldColor,
                                   ),
                                   _sidebarItem(
                                     icon: Icons.auto_stories,
                                     title: 'Kho Văn Khấn Cổ Truyền',
                                     isSelected: _currentTabIndex == 2,
-                                    onTap: () => setState(() => _currentTabIndex = 2),
+                                    onTap: () =>
+                                        setState(() => _currentTabIndex = 2),
                                     goldColor: goldColor,
                                   ),
                                   _sidebarItem(
@@ -554,14 +648,16 @@ class _SoGioAppState extends State<SoGioApp> {
                                     title: 'Gia Phả Dòng Họ',
                                     badge: '${_familyPeople.length}',
                                     isSelected: _currentTabIndex == 3,
-                                    onTap: () => setState(() => _currentTabIndex = 3),
+                                    onTap: () =>
+                                        setState(() => _currentTabIndex = 3),
                                     goldColor: goldColor,
                                   ),
                                   _sidebarItem(
                                     icon: Icons.settings,
                                     title: 'Cài Đặt & Dữ Liệu',
                                     isSelected: _currentTabIndex == 4,
-                                    onTap: () => setState(() => _currentTabIndex = 4),
+                                    onTap: () =>
+                                        setState(() => _currentTabIndex = 4),
                                     goldColor: goldColor,
                                   ),
                                 ],
@@ -570,29 +666,44 @@ class _SoGioAppState extends State<SoGioApp> {
 
                             // Footer: Dark Mode Toggle & Gia Chủ
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
                               decoration: BoxDecoration(
                                 border: Border(
-                                  top: BorderSide(color: Colors.white.withOpacity(0.1)),
+                                  top: BorderSide(
+                                    color: Colors.white.withOpacity(0.1),
+                                  ),
                                 ),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      _profile.giaChu.isNotEmpty ? 'Gia chủ: ${_profile.giaChu}' : 'Gia tộc Việt',
-                                      style: const TextStyle(color: Colors.white70, fontSize: 11.5),
+                                      _profile.giaChu.isNotEmpty
+                                          ? 'Gia chủ: ${_profile.giaChu}'
+                                          : 'Gia tộc Việt',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 11.5,
+                                      ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                   IconButton(
                                     icon: Icon(
-                                      isDark ? Icons.light_mode : Icons.dark_mode,
+                                      isDark
+                                          ? Icons.light_mode
+                                          : Icons.dark_mode,
                                       color: goldColor,
                                       size: 18,
                                     ),
-                                    tooltip: isDark ? 'Bật chế độ Sáng' : 'Bật chế độ Tối',
+                                    tooltip: isDark
+                                        ? 'Bật chế độ Sáng'
+                                        : 'Bật chế độ Tối',
                                     onPressed: () {
                                       final updated = UserProfile(
                                         giaChu: _profile.giaChu,
@@ -638,11 +749,17 @@ class _SoGioAppState extends State<SoGioApp> {
       decoration: BoxDecoration(
         color: isSelected ? Colors.white.withOpacity(0.18) : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
-        border: isSelected ? Border.all(color: goldColor.withOpacity(0.6), width: 1) : null,
+        border: isSelected
+            ? Border.all(color: goldColor.withOpacity(0.6), width: 1)
+            : null,
       ),
       child: ListTile(
         dense: true,
-        leading: Icon(icon, color: isSelected ? goldColor : Colors.white70, size: 20),
+        leading: Icon(
+          icon,
+          color: isSelected ? goldColor : Colors.white70,
+          size: 20,
+        ),
         title: Text(
           title,
           style: TextStyle(

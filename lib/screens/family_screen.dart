@@ -68,7 +68,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
     }
     final name = (widget.giaChuName != null && widget.giaChuName!.trim().isNotEmpty)
         ? widget.giaChuName!
-        : 'Lê Đức Anh';
+        : '';
     return KinshipService.findDefaultFocusPerson(widget.people, name);
   }
 
@@ -117,11 +117,8 @@ class _FamilyScreenState extends State<FamilyScreen> {
         title: const Text('Gia Phả Dòng Họ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         actions: [
           IconButton(
-            icon: Icon(
-              widget.profile?.isEffectivelyPremium == true ? Icons.workspace_premium : Icons.stars_rounded,
-              color: const Color(0xFFFFD700),
-            ),
-            tooltip: widget.profile?.isEffectivelyPremium == true ? 'Hội Viên Gia Tộc VIP' : 'Nâng Cấp Gia Tộc VIP (10k/Tháng)',
+            icon: const Icon(Icons.info_outline, color: Color(0xFFFFD700)),
+            tooltip: 'Thông tin bản thử nghiệm miễn phí',
             onPressed: () {
               Navigator.push(
                 context,
@@ -1189,7 +1186,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                               controller: name,
                               decoration: const InputDecoration(
                                 labelText: 'Họ và tên *',
-                                hintText: 'VD: Lê Văn Hùng',
+                                hintText: 'VD: Cha',
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.person_outline),
                               ),

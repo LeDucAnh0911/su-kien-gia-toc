@@ -1,25 +1,39 @@
 /// Dịch vụ tính toán vai vế, danh xưng xưng hô truyền thống Việt Nam
-/// Dựa trên người làm mốc (Ví dụ: "Tôi - Lê Đức Anh")
+/// Dựa trên người làm mốc do gia chủ chọn.
 import '../models/family_person.dart';
 
 class KinshipService {
-  /// Tìm người làm mốc (Ưu tiên tên gia chủ hoặc Lê Đức Anh, không để nhảy nhầm sang bố/ông)
+  /// Tìm người làm mốc theo tên gia chủ, sau đó ưu tiên thế hệ giữa.
   static FamilyPerson? findDefaultFocusPerson(List<FamilyPerson> people, String giaChuName) {
     if (people.isEmpty) return null;
-    final target = giaChuName.trim().isNotEmpty ? giaChuName.trim().toLowerCase() : 'lê đức anh';
-    final match = people.where((p) => p.name.trim().toLowerCase() == target);
-    if (match.isNotEmpty) return match.first;
+    final target = giaChuName.trim().toLowerCase();
+    if (target.isNotEmpty) {
+      final match = people.where((p) => p.name.trim().toLowerCase() == target);
+      if (match.isNotEmpty) return match.first;
+    }
 
-    // Luôn ưu tiên tìm "Lê Đức Anh" nếu target không khớp
-    final ducAnh = people.where((p) => p.name.trim().toLowerCase() == 'lê đức anh');
-    if (ducAnh.isNotEmpty) return ducAnh.first;
-
-    // Tìm người có cả bố mẹ và có con (thế hệ giữa)
+    // Ưu tiên người có quan hệ nhiều thế hệ để cây phả hệ mở đúng vị trí.
     final middleGen = people.where((p) => 
       (p.fatherId.isNotEmpty || p.motherId.isNotEmpty) &&
       people.any((c) => c.fatherId == p.id || c.motherId == p.id)
     );
-    if (middleGen.isNotEmpty) return middleGen.first;
+    if (middleGen.isNotEmpty) {
+      final byId = {for (final p in people) p.id: p};
+      int ancestorDepth(FamilyPerson person, Set<String> visited) {
+        if (!visited.add(person.id)) return 0;
+        final parents = [person.fatherId, person.motherId]
+            .where((id) => byId.containsKey(id))
+            .map((id) => byId[id]!);
+        var depth = 0;
+        for (final parent in parents) {
+          final branchDepth = 1 + ancestorDepth(parent, {...visited});
+          if (branchDepth > depth) depth = branchDepth;
+        }
+        return depth;
+      }
+      return middleGen.reduce((best, next) =>
+        ancestorDepth(next, <String>{}) > ancestorDepth(best, <String>{}) ? next : best);
+    }
     return people.first;
   }
 

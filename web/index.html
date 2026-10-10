@@ -151,7 +151,7 @@
     // Đăng ký Service Worker Cache-First để nạp tức thì trong < 1s trên iPhone/Android
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('flutter_service_worker.js?v=20261010_1')
+        navigator.serviceWorker.register('flutter_service_worker.js?v=20261010_2')
           .then(function(reg) {
             console.log('PWA ServiceWorker ready with scope:', reg.scope);
           })

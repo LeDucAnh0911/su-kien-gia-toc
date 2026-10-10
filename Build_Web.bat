@@ -1,26 +1,23 @@
 @echo off
 chcp 65001 >nul
-echo ========================================================
-echo   BIÊN DỊCH BẢN WEB (FLUTTER BUILD WEB) - SỔ GIỖ GIA TỘC
-echo ========================================================
-echo.
-set PATH=C:\src\flutter\bin;%PATH%
-echo Đang biên dịch Flutter Web...
-flutter build web --release
-
-if %ERRORLEVEL% EQU 0 (
-    echo Đang đưa giao diện Web độc lập vào bản chạy...
-    copy /Y "%~dp0standalone_web\index.html" "%~dp0build\web\index.html" >nul
-    copy /Y "%~dp0standalone_web\family.js" "%~dp0build\web\family.js" >nul
-    copy /Y "%~dp0standalone_web\family.css" "%~dp0build\web\family.css" >nul
-    copy /Y "%~dp0standalone_web\qr_app.png" "%~dp0build\web\qr_app.png" >nul
-    if exist "%~dp0So_Gio_Gia_Toc.apk" copy /Y "%~dp0So_Gio_Gia_Toc.apk" "%~dp0build\web\So_Gio_Gia_Toc.apk" >nul
-    echo.
-    echo ========================================================
-    echo   THÀNH CÔNG! Bản web đã được cập nhật vào build\web!
-    echo ========================================================
-) else (
-    echo.
-    echo CÓ LỖI XẢY RA TRONG QUÁ TRÌNH BIÊN DỊCH WEB!
+setlocal
+pushd "%~dp0"
+set "PATH=C:\src\flutter\bin;%PATH%"
+echo Dang bien dich Flutter Web cho Su Kien Gia Toc...
+flutter build web --release --no-wasm-dry-run
+if errorlevel 1 (
+  echo Bien dich that bai. Kiem tra thong bao loi phia tren.
+  popd
+  pause
+  exit /b 1
 )
+copy /Y "web\flutter_service_worker.js" "build\web\flutter_service_worker.js" >nul
+if errorlevel 1 (
+  echo Khong the chep Service Worker vao ban web.
+  popd
+  pause
+  exit /b 1
+)
+echo Da tao ban Flutter Web trong build\web.
+popd
 pause

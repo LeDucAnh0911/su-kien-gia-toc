@@ -138,11 +138,8 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(
-              widget.profile.isEffectivelyPremium ? Icons.workspace_premium : Icons.stars_rounded,
-              color: goldColor,
-            ),
-            tooltip: widget.profile.isEffectivelyPremium ? 'Hội Viên Gia Tộc VIP' : 'Nâng Cấp Gia Tộc VIP (10k/Tháng)',
+            icon: Icon(Icons.info_outline, color: goldColor),
+            tooltip: 'Thông tin bản thử nghiệm miễn phí',
             onPressed: () {
               Navigator.push(
                 context,

@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'su-kien-gia-toc-v20261009-1';
+const CACHE_NAME = 'su-kien-gia-toc-v20261010-2';
 
 // Danh sách tài nguyên cốt lõi cần nạp sẵn để mở tức thì (< 1 giây) trên iPhone & Android
 const PRECACHE_ASSETS = [

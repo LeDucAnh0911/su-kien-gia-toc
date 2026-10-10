@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /families/{familyId} {
+      function signedIn() {
+        return request.auth != null;
+      }
+
+      function isOwner() {
+        return signedIn() && resource.data.ownerUid == request.auth.uid;
+      }
+
+      function isInvitedViewer() {
+        return signedIn()
+          && request.auth.token.email_verified == true
+          && resource.data.memberEmails is list
+          && request.auth.token.email.lower() in resource.data.memberEmails;
+      }
+
+      // Chủ gia tộc cần đọc tài liệu chưa tồn tại trong transaction tạo mới.
+      allow get: if signedIn() && (resource == null || isOwner() || isInvitedViewer());
+      allow list, delete: if false;
+
+      allow create: if signedIn()
+        && familyId.matches('^FAM-[0-9A-F]{32}$')
+        && request.resource.data.keys().hasAll([
+          'syncCode', 'ownerUid', 'memberEmails', 'revision',
+          'profile', 'events', 'notes', 'familyPeople'
+        ])
+        && request.resource.data.syncCode == familyId
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.memberEmails == []
+        && request.resource.data.revision == 1
+        && request.resource.data.events is list
+        && request.resource.data.notes is list
+        && request.resource.data.familyPeople is list;
+
+      allow update: if isOwner()
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.syncCode == resource.data.syncCode
+        && request.resource.data.memberEmails is list
+        && request.resource.data.memberEmails.size() <= 50
+        && request.resource.data.events is list
+        && request.resource.data.notes is list
+        && request.resource.data.familyPeople is list
+        && (
+          (request.resource.data.revision == resource.data.revision + 1
+            && request.resource.data.memberEmails == resource.data.memberEmails)
+          || (request.resource.data.revision == resource.data.revision
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberEmails']))
+        );
+    }
+  }
+}

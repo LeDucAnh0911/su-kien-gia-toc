@@ -296,7 +296,7 @@ class _PrayersScreenState extends State<PrayersScreen> {
                 controller: giaChuController,
                 decoration: const InputDecoration(
                   labelText: 'Họ tên Gia chủ / Tín chủ',
-                  hintText: 'VD: Lê Đức Anh',
+                  hintText: 'VD: Tên gia chủ',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -305,7 +305,7 @@ class _PrayersScreenState extends State<PrayersScreen> {
                 controller: diaChiController,
                 decoration: const InputDecoration(
                   labelText: 'Nơi cư ngụ (Địa chỉ nhà)',
-                  hintText: 'VD: Số 12, Đường Trần Phú, TP Hà Tĩnh',
+                  hintText: 'VD: Địa chỉ dùng trong văn khấn',
                   border: OutlineInputBorder(),
                 ),
               ),

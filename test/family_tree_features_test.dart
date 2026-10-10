@@ -10,17 +10,17 @@ void main() {
   final samplePeople = StorageService.getInitialSampleFamilyPeople();
 
   group('KinshipService Tests (Xưng hô chuẩn mực theo mốc)', () {
-    final ducAnh = samplePeople.firstWhere((p) => p.name == 'Lê Đức Anh');
+    final ducAnh = samplePeople.firstWhere((p) => p.name == 'Người Mẫu');
 
-    test('Tính đúng vai vế họ nội và họ ngoại từ mốc Lê Đức Anh', () {
-      final ongNoi = samplePeople.firstWhere((p) => p.name == 'Lê Văn Đô');
-      final baNoi = samplePeople.firstWhere((p) => p.name == 'Trương Thị Lạng');
-      final ongNgoai = samplePeople.firstWhere((p) => p.name == 'Nghiêm Khang');
-      final bo = samplePeople.firstWhere((p) => p.name == 'Lê Văn Hùng');
-      final me = samplePeople.firstWhere((p) => p.name == 'Nghiêm Thị Linh');
-      final vo = samplePeople.firstWhere((p) => p.name == 'Nguyễn Thị Thương');
-      final con = samplePeople.firstWhere((p) => p.name == 'Lê Tùng Lâm');
-      final chuVuong = samplePeople.firstWhere((p) => p.name == 'Lê Quang Vượng');
+    test('Tính đúng vai vế họ nội và họ ngoại từ mốc Người Mẫu', () {
+      final ongNoi = samplePeople.firstWhere((p) => p.name == 'Ông Nội Mẫu');
+      final baNoi = samplePeople.firstWhere((p) => p.name == 'Bà Nội Mẫu');
+      final ongNgoai = samplePeople.firstWhere((p) => p.name == 'Ông Ngoại Mẫu');
+      final bo = samplePeople.firstWhere((p) => p.name == 'Cha Mẫu');
+      final me = samplePeople.firstWhere((p) => p.name == 'Mẹ Mẫu');
+      final vo = samplePeople.firstWhere((p) => p.name == 'Vợ Mẫu');
+      final con = samplePeople.firstWhere((p) => p.name == 'Con Mẫu');
+      final chuVuong = samplePeople.firstWhere((p) => p.name == 'Chú Mẫu 1');
 
       expect(KinshipService.getKinshipTitle(ducAnh, ducAnh, samplePeople), 'Tôi (Bản thân)');
       expect(KinshipService.getKinshipTitle(ongNoi, ducAnh, samplePeople), 'Ông nội');
@@ -35,7 +35,7 @@ void main() {
   });
 
   group('FamilyTreeBuilder Tests (Cặp vợ chồng & Phân cấp thế hệ)', () {
-    final ducAnh = samplePeople.firstWhere((p) => p.name == 'Lê Đức Anh');
+    final ducAnh = samplePeople.firstWhere((p) => p.name == 'Người Mẫu');
 
     test('Xây dựng cây phả hệ Bên Nội với vợ chồng nằm cùng node', () {
       final treeNoi = FamilyTreeBuilder.buildTree(
@@ -46,25 +46,25 @@ void main() {
 
       expect(treeNoi.isNotEmpty, true);
       final rootNode = treeNoi.first;
-      // Gốc bên nội là Lê Văn Đô, có vợ là Trương Thị Lạng
-      expect(rootNode.person.name, 'Lê Văn Đô');
-      expect(rootNode.spouse?.name, 'Trương Thị Lạng');
+      // Gốc bên nội là Ông Nội Mẫu, có vợ là Bà Nội Mẫu
+      expect(rootNode.person.name, 'Ông Nội Mẫu');
+      expect(rootNode.spouse?.name, 'Bà Nội Mẫu');
       expect(rootNode.children.isNotEmpty, true);
 
-      // Con có Lê Văn Hùng
-      final boNode = rootNode.children.firstWhere((c) => c.person.name == 'Lê Văn Hùng');
-      expect(boNode.spouse?.name, 'Nghiêm Thị Linh');
+      // Con có Cha Mẫu
+      final boNode = rootNode.children.firstWhere((c) => c.person.name == 'Cha Mẫu');
+      expect(boNode.spouse?.name, 'Mẹ Mẫu');
 
-      // Cháu có Lê Đức Anh
-      final meNode = boNode.children.firstWhere((c) => c.person.name == 'Lê Đức Anh');
-      expect(meNode.spouse?.name, 'Nguyễn Thị Thương');
+      // Cháu có Người Mẫu
+      final meNode = boNode.children.firstWhere((c) => c.person.name == 'Người Mẫu');
+      expect(meNode.spouse?.name, 'Vợ Mẫu');
 
-      // Chắt có Lê Tùng Lâm
-      final conNode = meNode.children.firstWhere((c) => c.person.name == 'Lê Tùng Lâm');
-      expect(conNode.person.name, 'Lê Tùng Lâm');
+      // Chắt có Con Mẫu
+      final conNode = meNode.children.firstWhere((c) => c.person.name == 'Con Mẫu');
+      expect(conNode.person.name, 'Con Mẫu');
     });
 
-    test('Xây dựng cây phả hệ Bên Ngoại bắt đầu từ Nghiêm Khang', () {
+    test('Xây dựng cây phả hệ Bên Ngoại bắt đầu từ Ông Ngoại Mẫu', () {
       final treeNgoai = FamilyTreeBuilder.buildTree(
         people: samplePeople,
         focusPerson: ducAnh,
@@ -73,15 +73,15 @@ void main() {
 
       expect(treeNgoai.isNotEmpty, true);
       final rootNgoai = treeNgoai.first;
-      expect(rootNgoai.person.name, 'Nghiêm Khang');
+      expect(rootNgoai.person.name, 'Ông Ngoại Mẫu');
       expect(rootNgoai.relativeGeneration, -2);
       expect(rootNgoai.children.isNotEmpty, true);
-      // Con gái là Nghiêm Thị Linh
-      expect(rootNgoai.children.first.person.name, 'Nghiêm Thị Linh');
+      // Con gái là Mẹ Mẫu
+      expect(rootNgoai.children.first.person.name, 'Mẹ Mẫu');
       expect(rootNgoai.children.first.relativeGeneration, -1);
     });
 
-    test('Xây dựng cây phả hệ Bên Vợ bắt đầu từ Nguyễn Quốc Nam', () {
+    test('Xây dựng cây phả hệ Bên Vợ bắt đầu từ Bố Vợ Mẫu', () {
       final treeVo = FamilyTreeBuilder.buildTree(
         people: samplePeople,
         focusPerson: ducAnh,
@@ -90,8 +90,8 @@ void main() {
 
       expect(treeVo.isNotEmpty, true);
       final rootVo = treeVo.first;
-      expect(rootVo.person.name, 'Nguyễn Quốc Nam');
-      expect(rootVo.spouse?.name, 'Từ Thị Nga');
+      expect(rootVo.person.name, 'Bố Vợ Mẫu');
+      expect(rootVo.spouse?.name, 'Mẹ Vợ Mẫu');
       expect(rootVo.relativeGeneration, -1); // Bố mẹ vợ cùng đời -1
       expect(rootVo.children.isNotEmpty, true);
     });
@@ -105,14 +105,14 @@ void main() {
 
       expect(treeAll.length, greaterThanOrEqualTo(3));
       final rootNames = treeAll.map((r) => r.person.name).toList();
-      expect(rootNames, contains('Lê Văn Đô'));
-      expect(rootNames, contains('Nghiêm Khang'));
-      expect(rootNames, contains('Nguyễn Quốc Nam'));
+      expect(rootNames, contains('Ông Nội Mẫu'));
+      expect(rootNames, contains('Ông Ngoại Mẫu'));
+      expect(rootNames, contains('Bố Vợ Mẫu'));
 
       // Kiểm tra tính chuẩn xác của thế hệ tương đối để căn cùng một dòng
-      final patRoot = treeAll.firstWhere((r) => r.person.name == 'Lê Văn Đô');
-      final matRoot = treeAll.firstWhere((r) => r.person.name == 'Nghiêm Khang');
-      final spRoot = treeAll.firstWhere((r) => r.person.name == 'Nguyễn Quốc Nam');
+      final patRoot = treeAll.firstWhere((r) => r.person.name == 'Ông Nội Mẫu');
+      final matRoot = treeAll.firstWhere((r) => r.person.name == 'Ông Ngoại Mẫu');
+      final spRoot = treeAll.firstWhere((r) => r.person.name == 'Bố Vợ Mẫu');
 
       expect(patRoot.relativeGeneration, -2); // Ông bà nội
       expect(matRoot.relativeGeneration, -2); // Ông bà ngoại
@@ -134,7 +134,7 @@ void main() {
           people: samplePeople,
           onSaved: (_) {},
           onDeleted: (_) {},
-          giaChuName: 'Lê Đức Anh',
+          giaChuName: 'Người Mẫu',
         ),
       ));
       await tester.pumpAndSettle();
@@ -149,15 +149,15 @@ void main() {
       // Chuyển sang tab Bên Vợ
       await tester.tap(find.text('Bên Vợ'));
       await tester.pumpAndSettle();
-      expect(find.text('Nguyễn Quốc Nam'), findsWidgets);
+      expect(find.text('Bố Vợ Mẫu'), findsWidgets);
 
       // Chuyển sang tab Danh Sách
       await tester.tap(find.text('Danh Sách'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Lê Đức Anh'), findsWidgets);
-      expect(find.text('Lê Văn Hùng'), findsWidgets);
-      expect(find.text('Nghiêm Thị Linh'), findsWidgets);
-      expect(find.text('Nguyễn Quốc Nam'), findsWidgets);
+      expect(find.textContaining('Người Mẫu'), findsWidgets);
+      expect(find.text('Cha Mẫu'), findsWidgets);
+      expect(find.text('Mẹ Mẫu'), findsWidgets);
+      expect(find.text('Bố Vợ Mẫu'), findsWidgets);
     });
 
     testWidgets('Tự động gợi ý Mẹ khi chọn Cha trong Form thêm người', (tester) async {
@@ -173,7 +173,7 @@ void main() {
           people: samplePeople,
           onSaved: (_) {},
           onDeleted: (_) {},
-          giaChuName: 'Lê Đức Anh',
+          giaChuName: 'Người Mẫu',
         ),
       ));
       await tester.pumpAndSettle();
@@ -184,68 +184,68 @@ void main() {
 
       expect(find.text('Thêm người thân'), findsOneWidget);
 
-      // Chọn Cha là Lê Văn Đô -> Tự động gợi ý Mẹ là Trương Thị Lạng
+      // Chọn Cha là Ông Nội Mẫu -> Tự động gợi ý Mẹ là Bà Nội Mẫu
       final fatherDropdown = find.byType(DropdownButtonFormField<String>).at(2);
       await tester.ensureVisible(fatherDropdown);
       await tester.pumpAndSettle();
       await tester.tap(fatherDropdown);
       await tester.pumpAndSettle();
 
-      // Chọn Lê Văn Đô trong danh sách
-      await tester.tap(find.text('Lê Văn Đô (Bên nội)').last);
+      // Chọn Ông Nội Mẫu trong danh sách
+      await tester.tap(find.text('Ông Nội Mẫu (Bên nội)').last);
       await tester.pumpAndSettle();
 
-      // Kiểm tra dropdown Mẹ đã tự động chọn Trương Thị Lạng
-      expect(find.text('Trương Thị Lạng (Bên nội)'), findsOneWidget);
+      // Kiểm tra dropdown Mẹ đã tự động chọn Bà Nội Mẫu
+      expect(find.text('Bà Nội Mẫu (Bên nội)'), findsOneWidget);
     });
 
-    test('Bản thân mặc định luôn là Lê Đức Anh khi giaChuName rỗng', () {
+    test('Bản thân mặc định luôn là Người Mẫu khi giaChuName rỗng', () {
       final defaultFocus = KinshipService.findDefaultFocusPerson(samplePeople, '');
       expect(defaultFocus, isNotNull);
-      expect(defaultFocus!.name, 'Lê Đức Anh');
+      expect(defaultFocus!.name, 'Người Mẫu');
     });
 
     test('Thứ tự con trong cây: Con 1 ở bên trái, các con tiếp theo ở bên phải kèm thứ tự con', () {
-      final ducAnh = samplePeople.firstWhere((p) => p.name == 'Lê Đức Anh');
+      final ducAnh = samplePeople.firstWhere((p) => p.name == 'Người Mẫu');
       final tree = FamilyTreeBuilder.buildTree(
         people: samplePeople,
         focusPerson: ducAnh,
         mode: 'noi',
       );
 
-      final ongNoiNode = tree.firstWhere((n) => n.person.name == 'Lê Văn Đô');
+      final ongNoiNode = tree.firstWhere((n) => n.person.name == 'Ông Nội Mẫu');
       expect(ongNoiNode.children.length, 4);
 
       // Con 1 ở vị trí index 0 (bên trái), Con 2 ở index 1...
-      expect(ongNoiNode.children[0].person.name, 'Lê Văn Hùng');
+      expect(ongNoiNode.children[0].person.name, 'Cha Mẫu');
       expect(ongNoiNode.children[0].childOrder, 1);
       expect(ongNoiNode.children[0].totalSiblings, 4);
 
-      expect(ongNoiNode.children[1].person.name, 'Lê Quang Vượng');
+      expect(ongNoiNode.children[1].person.name, 'Chú Mẫu 1');
       expect(ongNoiNode.children[1].childOrder, 2);
 
-      expect(ongNoiNode.children[2].person.name, 'Lê Kiên Cường');
+      expect(ongNoiNode.children[2].person.name, 'Chú Mẫu 2');
       expect(ongNoiNode.children[2].childOrder, 3);
 
-      expect(ongNoiNode.children[3].person.name, 'Lê Thị Hường');
+      expect(ongNoiNode.children[3].person.name, 'Cô Mẫu');
       expect(ongNoiNode.children[3].childOrder, 4);
 
-      // Nhánh con của Lê Văn Hùng: Lê Đức Anh (Con 1), Lê Quang Minh (Con 2)
+      // Nhánh con của Cha Mẫu: Người Mẫu (Con 1), Em Trai Mẫu (Con 2)
       final boNode = ongNoiNode.children[0];
       expect(boNode.children.length, 2);
-      expect(boNode.children[0].person.name, 'Lê Đức Anh');
+      expect(boNode.children[0].person.name, 'Người Mẫu');
       expect(boNode.children[0].childOrder, 1);
-      expect(boNode.children[1].person.name, 'Lê Quang Minh');
+      expect(boNode.children[1].person.name, 'Em Trai Mẫu');
       expect(boNode.children[1].childOrder, 2);
     });
 
     test('Lỗi chọn Con 2 hoặc Con 4 không được nhảy lên đầu bên trái', () {
-      final ducAnh = samplePeople.firstWhere((p) => p.name == 'Lê Đức Anh');
+      final ducAnh = samplePeople.firstWhere((p) => p.name == 'Người Mẫu');
 
-      // Test case 1: Chỉ chọn Con 2 cho Lê Quang Vượng (birthOrder = 2), các con khác để 0 (tự động)
+      // Test case 1: Chỉ chọn Con 2 cho Chú Mẫu 1 (birthOrder = 2), các con khác để 0 (tự động)
       final testPeople1 = samplePeople.map((p) {
-        if (p.name == 'Lê Quang Vượng') return p.copyWith(birthOrder: 2);
-        if (['Lê Văn Hùng', 'Lê Kiên Cường', 'Lê Thị Hường'].contains(p.name)) {
+        if (p.name == 'Chú Mẫu 1') return p.copyWith(birthOrder: 2);
+        if (['Cha Mẫu', 'Chú Mẫu 2', 'Cô Mẫu'].contains(p.name)) {
           return p.copyWith(birthOrder: 0);
         }
         return p;
@@ -256,21 +256,21 @@ void main() {
         focusPerson: ducAnh,
         mode: 'noi',
       );
-      final ongNoiNode1 = tree1.firstWhere((n) => n.person.name == 'Lê Văn Đô');
-      // Thứ tự vẫn phải là: Lê Văn Hùng (Con 1), Lê Quang Vượng (Con 2), Lê Kiên Cường (Con 3), Lê Thị Hường (Con 4)
-      expect(ongNoiNode1.children[0].person.name, 'Lê Văn Hùng');
+      final ongNoiNode1 = tree1.firstWhere((n) => n.person.name == 'Ông Nội Mẫu');
+      // Thứ tự vẫn phải là: Cha Mẫu (Con 1), Chú Mẫu 1 (Con 2), Chú Mẫu 2 (Con 3), Cô Mẫu (Con 4)
+      expect(ongNoiNode1.children[0].person.name, 'Cha Mẫu');
       expect(ongNoiNode1.children[0].childOrder, 1);
-      expect(ongNoiNode1.children[1].person.name, 'Lê Quang Vượng');
+      expect(ongNoiNode1.children[1].person.name, 'Chú Mẫu 1');
       expect(ongNoiNode1.children[1].childOrder, 2);
-      expect(ongNoiNode1.children[2].person.name, 'Lê Kiên Cường');
+      expect(ongNoiNode1.children[2].person.name, 'Chú Mẫu 2');
       expect(ongNoiNode1.children[2].childOrder, 3);
-      expect(ongNoiNode1.children[3].person.name, 'Lê Thị Hường');
+      expect(ongNoiNode1.children[3].person.name, 'Cô Mẫu');
       expect(ongNoiNode1.children[3].childOrder, 4);
 
-      // Test case 2: Chỉ chọn Con 4 cho Lê Thị Hường (birthOrder = 4), các con khác để 0 (tự động)
+      // Test case 2: Chỉ chọn Con 4 cho Cô Mẫu (birthOrder = 4), các con khác để 0 (tự động)
       final testPeople2 = samplePeople.map((p) {
-        if (p.name == 'Lê Thị Hường') return p.copyWith(birthOrder: 4);
-        if (['Lê Văn Hùng', 'Lê Quang Vượng', 'Lê Kiên Cường'].contains(p.name)) {
+        if (p.name == 'Cô Mẫu') return p.copyWith(birthOrder: 4);
+        if (['Cha Mẫu', 'Chú Mẫu 1', 'Chú Mẫu 2'].contains(p.name)) {
           return p.copyWith(birthOrder: 0);
         }
         return p;
@@ -281,22 +281,22 @@ void main() {
         focusPerson: ducAnh,
         mode: 'noi',
       );
-      final ongNoiNode2 = tree2.firstWhere((n) => n.person.name == 'Lê Văn Đô');
-      // Lê Thị Hường không được nhảy lên index 0, phải ở cuối bên phải (index 3)
-      expect(ongNoiNode2.children[0].person.name, 'Lê Văn Hùng');
+      final ongNoiNode2 = tree2.firstWhere((n) => n.person.name == 'Ông Nội Mẫu');
+      // Cô Mẫu không được nhảy lên index 0, phải ở cuối bên phải (index 3)
+      expect(ongNoiNode2.children[0].person.name, 'Cha Mẫu');
       expect(ongNoiNode2.children[0].childOrder, 1);
-      expect(ongNoiNode2.children[1].person.name, 'Lê Quang Vượng');
+      expect(ongNoiNode2.children[1].person.name, 'Chú Mẫu 1');
       expect(ongNoiNode2.children[1].childOrder, 2);
-      expect(ongNoiNode2.children[2].person.name, 'Lê Kiên Cường');
+      expect(ongNoiNode2.children[2].person.name, 'Chú Mẫu 2');
       expect(ongNoiNode2.children[2].childOrder, 3);
-      expect(ongNoiNode2.children[3].person.name, 'Lê Thị Hường');
+      expect(ongNoiNode2.children[3].person.name, 'Cô Mẫu');
       expect(ongNoiNode2.children[3].childOrder, 4);
 
       // Test case 3: Chọn Con 2 và Con 4 đồng thời, Con 1 và Con 3 để 0
       final testPeople3 = samplePeople.map((p) {
-        if (p.name == 'Lê Quang Vượng') return p.copyWith(birthOrder: 2);
-        if (p.name == 'Lê Thị Hường') return p.copyWith(birthOrder: 4);
-        if (['Lê Văn Hùng', 'Lê Kiên Cường'].contains(p.name)) {
+        if (p.name == 'Chú Mẫu 1') return p.copyWith(birthOrder: 2);
+        if (p.name == 'Cô Mẫu') return p.copyWith(birthOrder: 4);
+        if (['Cha Mẫu', 'Chú Mẫu 2'].contains(p.name)) {
           return p.copyWith(birthOrder: 0);
         }
         return p;
@@ -307,14 +307,14 @@ void main() {
         focusPerson: ducAnh,
         mode: 'noi',
       );
-      final ongNoiNode3 = tree3.firstWhere((n) => n.person.name == 'Lê Văn Đô');
-      expect(ongNoiNode3.children[0].person.name, 'Lê Văn Hùng');
+      final ongNoiNode3 = tree3.firstWhere((n) => n.person.name == 'Ông Nội Mẫu');
+      expect(ongNoiNode3.children[0].person.name, 'Cha Mẫu');
       expect(ongNoiNode3.children[0].childOrder, 1);
-      expect(ongNoiNode3.children[1].person.name, 'Lê Quang Vượng');
+      expect(ongNoiNode3.children[1].person.name, 'Chú Mẫu 1');
       expect(ongNoiNode3.children[1].childOrder, 2);
-      expect(ongNoiNode3.children[2].person.name, 'Lê Kiên Cường');
+      expect(ongNoiNode3.children[2].person.name, 'Chú Mẫu 2');
       expect(ongNoiNode3.children[2].childOrder, 3);
-      expect(ongNoiNode3.children[3].person.name, 'Lê Thị Hường');
+      expect(ongNoiNode3.children[3].person.name, 'Cô Mẫu');
       expect(ongNoiNode3.children[3].childOrder, 4);
     });
 

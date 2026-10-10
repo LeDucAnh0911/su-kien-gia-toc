@@ -258,7 +258,7 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
                         initialValue: _personName,
                         decoration: const InputDecoration(
                           labelText: 'Họ và tên người mất',
-                          hintText: 'VD: Lê Văn Phúc',
+                          hintText: 'VD: Ông Nội',
                           prefixIcon: Icon(Icons.person_outline),
                           border: OutlineInputBorder(),
                         ),
