@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Chính sách quyền riêng tư của ứng dụng Sự kiện gia tộc.">
+  <title>Chính sách quyền riêng tư | Sự kiện gia tộc</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #2c1810; background: #f7f2e8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; line-height: 1.7; }
+    header { background: #8b1e0f; color: #fff; padding: 1.5rem max(1rem, calc((100vw - 780px) / 2)); }
+    header a { color: #fff1c2; }
+    main { max-width: 780px; margin: 2rem auto; padding: 0 1rem 3rem; }
+    h1 { margin: .5rem 0; line-height: 1.25; }
+    h2 { margin-top: 2rem; color: #76190d; font-size: 1.2rem; }
+    a { color: #76190d; }
+    .date { color: #665b55; }
+    .notice { border-left: 4px solid #b98b25; padding: .75rem 1rem; background: #fff9e9; }
+    footer { border-top: 1px solid #d9c9b7; padding-top: 1rem; margin-top: 2.5rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="./">← Trang chủ Sự kiện gia tộc</a>
+    <h1>Chính sách quyền riêng tư</h1>
+  </header>
+  <main>
+    <p class="date">Cập nhật ngày 10/10/2026</p>
+    <p>Chính sách này áp dụng cho website và ứng dụng Sự kiện gia tộc. Ứng dụng giúp người dùng ghi nhớ sự kiện gia đình, lập gia phả, ghi chú và sao lưu dữ liệu. Các tính năng lưu trên thiết bị và đồng bộ đám mây được trình bày riêng dưới đây.</p>
+
+    <h2>1. Dữ liệu được xử lý</h2>
+    <p>Bạn có thể nhập tên, địa chỉ của gia chủ, thông tin sự kiện, ngày sinh hoặc ngày mất, quan hệ gia đình, quê quán, nơi an nghỉ, ảnh đại diện, ghi chú, mâm cỗ và khoản đóng góp. Những mục này có thể chứa thông tin của người thân khác; bạn nên cân nhắc trước khi nhập hoặc chia sẻ.</p>
+    <p>Nếu bạn chọn đăng nhập bằng Google, Google và Firebase Authentication xử lý thông tin tài khoản cần cho đăng nhập, như mã người dùng, tên, địa chỉ email và ảnh hồ sơ nếu có. Ứng dụng chỉ yêu cầu thông tin định danh cơ bản để xác thực; ứng dụng không yêu cầu quyền đọc Gmail, Danh bạ hoặc Google Drive.</p>
+
+    <h2>2. Cách sử dụng và lưu trữ</h2>
+    <p>Ứng dụng lưu các sự kiện, ghi chú, hồ sơ gia đình và cài đặt trên thiết bị; trên website, dữ liệu này nằm trong bộ nhớ cục bộ của trình duyệt. Dữ liệu được dùng để hiển thị lịch, gia phả, lời nhắc và tạo bản sao lưu theo thao tác của bạn. Phần lớn chức năng không yêu cầu đăng nhập Google.</p>
+    <p>Nếu dịch vụ đồng bộ đám mây được kích hoạt và bạn chủ động tải dữ liệu lên, ứng dụng có thể gửi mã kết nối gia đình, hồ sơ, sự kiện, ghi chú, gia phả, thời điểm cập nhật và tên hoặc email tài khoản đang đăng nhập đến Cloud Firestore của dự án <code>so-gio-gia-toc</code>. Mã kết nối được dùng để tìm bộ dữ liệu của gia đình; không nên chia sẻ mã này công khai.</p>
+
+    <h2>3. Bên cung cấp dịch vụ và việc chia sẻ</h2>
+    <p>Google cung cấp dịch vụ đăng nhập và Firebase Authentication/Cloud Firestore cho các tính năng đám mây. GitHub Pages phục vụ website công khai. Website cũng tải phông chữ từ Google Fonts và biểu tượng từ cdnjs; khi truy cập các tài nguyên đó, trình duyệt có thể gửi thông tin kết nối như địa chỉ IP đến nhà cung cấp tương ứng. Việc xử lý của họ tuân theo chính sách riêng của từng dịch vụ.</p>
+    <p>Ứng dụng không tự đăng công khai hồ sơ gia đình. Tệp sao lưu, bản in hoặc nội dung bạn chọn sao chép/chia sẻ chỉ được tạo theo thao tác của bạn. Mã ứng dụng hiện tại không tích hợp quảng cáo hoặc công cụ phân tích hành vi người dùng.</p>
+
+    <h2>4. Thời gian lưu và lựa chọn của bạn</h2>
+    <p>Dữ liệu cục bộ còn trên thiết bị cho đến khi bạn xóa trong ứng dụng, xóa dữ liệu của trình duyệt hoặc gỡ ứng dụng; tệp sao lưu đã xuất do bạn tự quản lý. Dữ liệu đã đồng bộ trên Firestore có thể vẫn tồn tại sau khi bạn đăng xuất hoặc xóa bản cục bộ. Nếu cần xem, sửa hoặc yêu cầu xóa dữ liệu đám mây liên quan đến gia đình hay tài khoản của mình, hãy liên hệ theo email bên dưới và cung cấp thông tin cần thiết để xác minh yêu cầu.</p>
+
+    <h2>5. Bảo vệ dữ liệu và thông tin người thân</h2>
+    <p>Hãy bảo vệ thiết bị, tài khoản Google, tệp sao lưu và mã kết nối gia đình. Trước khi nhập thông tin của người thân, nhất là trẻ em, hãy bảo đảm bạn có quyền chia sẻ thông tin đó trong phạm vi sử dụng của gia đình. Không gửi dữ liệu nhạy cảm qua các kênh chia sẻ công khai nếu bạn không muốn người khác xem được.</p>
+
+    <h2>6. Thay đổi và liên hệ</h2>
+    <p>Khi cách ứng dụng xử lý dữ liệu thay đổi, trang này sẽ được cập nhật kèm ngày sửa đổi. Mọi câu hỏi hoặc yêu cầu về dữ liệu cá nhân có thể gửi đến <a href="mailto:ducanh.vinhuni.1989@gmail.com">ducanh.vinhuni.1989@gmail.com</a>.</p>
+
+    <footer><a href="./">Trang chủ</a> · <a href="terms.html">Điều khoản sử dụng</a></footer>
+  </main>
+</body>
+</html>
