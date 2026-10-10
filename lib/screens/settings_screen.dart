@@ -1,6 +1,7 @@
 /// Màn hình Cài Đặt & Sao Lưu / Phục Hồi Dữ Liệu
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/event_model.dart';
 import '../models/note_model.dart';
 import '../models/family_person.dart';
@@ -903,6 +904,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     '• Gia phả nội ngoại và quan hệ các thế hệ',
                     style: TextStyle(fontSize: 13, height: 1.5),
                   ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      TextButton(
+                        onPressed: () async {
+                          await launchUrl(
+                            Uri.parse('https://leducanh0911.github.io/su-kien-gia-toc/privacy.html'),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        },
+                        child: const Text('Chính sách quyền riêng tư'),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          await launchUrl(
+                            Uri.parse('https://leducanh0911.github.io/su-kien-gia-toc/terms.html'),
+                            mode: LaunchMode.externalApplication,
+                          );
+                        },
+                        child: const Text('Điều khoản sử dụng'),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -1296,66 +1321,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      // Nếu Firebase chưa được trỏ Google Client ID trên Cloud (môi trường local/offline)
-      // Cho phép người dùng chuyển sang chế độ Thử nghiệm tài khoản
-      showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: const [
-              Icon(Icons.info_outline, color: Colors.indigo),
-              SizedBox(width: 8),
-              Text('Kết Nối Google Cloud', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Ứng dụng đã sẵn sàng kiến trúc Firebase Authentication & Cloud Firestore.\n\n'
-                '• Khi triển khai Web/App chính thức: Cần cấu hình OAuth 2.0 Client ID trên Google Cloud Console.\n'
-                '• Bạn có muốn kích hoạt chế độ Tài khoản Mẫu để thử nghiệm đồng bộ ngay không?',
-                style: TextStyle(fontSize: 13, height: 1.4),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Chi tiết kỹ thuật: $e',
-                  style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Colors.blueGrey),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Đóng'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
-              onPressed: () {
-                Navigator.pop(ctx);
-                setState(() {
-                  _googleUserEmail = 'leducanh.vnpost@gmail.com';
-                  _googleUserName = widget.profile.giaChu.isNotEmpty ? widget.profile.giaChu : 'Lê Đức Anh';
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    backgroundColor: Colors.indigo,
-                    content: Text('Đã kết nối tài khoản Google: leducanh.vnpost@gmail.com (Chế độ sẵn sàng)'),
-                  ),
-                );
-              },
-              child: const Text('Bật Chế Độ Thử Nghiệm', style: TextStyle(color: Colors.white)),
-            ),
-          ],
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red.shade800,
+          content: Text('Không thể đăng nhập Google: $e'),
         ),
       );
     }

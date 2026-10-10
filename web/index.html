@@ -99,6 +99,17 @@
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
+    .legal-links {
+      position: absolute;
+      bottom: 22px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 18px;
+      padding: 0 12px;
+      font-size: 12px;
+    }
+    .legal-links a { color: #F3E5AB; }
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
@@ -112,7 +123,12 @@
     <div class="title">SỰ KIỆN GIA TỘC</div>
     <div class="subtitle">Lịch Âm Dương & Phả Hệ Hoàng Kim</div>
     <div class="spinner"></div>
+    <div class="legal-links">
+      <a href="privacy.html">Chính sách quyền riêng tư</a>
+      <a href="terms.html">Điều khoản sử dụng</a>
+    </div>
   </div>
+  <noscript><p><a href="privacy.html">Chính sách quyền riêng tư</a> · <a href="terms.html">Điều khoản sử dụng</a></p></noscript>
   <script>
     function removeLoading() {
       var l = document.getElementById('loading');
@@ -134,7 +150,7 @@
     // Đăng ký Service Worker Cache-First để nạp tức thì trong < 1s trên iPhone/Android
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('flutter_service_worker.js?v=20261009_2')
+        navigator.serviceWorker.register('flutter_service_worker.js?v=20261010_1')
           .then(function(reg) {
             console.log('PWA ServiceWorker ready with scope:', reg.scope);
           })

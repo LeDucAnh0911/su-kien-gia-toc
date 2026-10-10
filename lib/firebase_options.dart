@@ -19,32 +19,32 @@ class DefaultFirebaseOptions {
     }
   }
 
-  // Cấu hình Firebase Web (Sự Kiện Gia Tộc)
+  // Cấu hình Firebase Web (Sự kiện gia tộc)
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyA88_DemoKey_SoGioGiaToc_VietNam',
-    appId: '1:987654321098:web:7a8b9c0d1e2f3a4b',
-    messagingSenderId: '987654321098',
-    projectId: 'so-gio-gia-toc-vn',
-    authDomain: 'so-gio-gia-toc-vn.firebaseapp.com',
-    storageBucket: 'so-gio-gia-toc-vn.appspot.com',
+    apiKey: 'AIzaSyA5rsB3tSgGs-wWKz1MzxFDwK0r9ub3rYA',
+    appId: '1:350014991052:web:cf506d66a541c46da33069',
+    messagingSenderId: '350014991052',
+    projectId: 'so-gio-gia-toc',
+    authDomain: 'so-gio-gia-toc.firebaseapp.com',
+    storageBucket: 'so-gio-gia-toc.firebasestorage.app',
   );
 
   // Cấu hình Firebase Android
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyA88_DemoKey_SoGioGiaToc_Android',
-    appId: '1:987654321098:android:8b9c0d1e2f3a4b5c',
-    messagingSenderId: '987654321098',
-    projectId: 'so-gio-gia-toc-vn',
-    storageBucket: 'so-gio-gia-toc-vn.appspot.com',
+    apiKey: 'AIzaSyCVVcqRdrPuikMiFDQdWtupuHPmHETIKXs',
+    appId: '1:350014991052:android:17668fb40e4ca6aca33069',
+    messagingSenderId: '350014991052',
+    projectId: 'so-gio-gia-toc',
+    storageBucket: 'so-gio-gia-toc.firebasestorage.app',
   );
 
   // Cấu hình Firebase iOS
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyA88_DemoKey_SoGioGiaToc_iOS',
-    appId: '1:987654321098:ios:9c0d1e2f3a4b5c6d',
-    messagingSenderId: '987654321098',
-    projectId: 'so-gio-gia-toc-vn',
-    storageBucket: 'so-gio-gia-toc-vn.appspot.com',
-    iosBundleId: 'vn.io.buudienhatinh.sogio',
+    apiKey: 'AIzaSyCI4s4aku20Zu6kPhAdpwQlygOhLDKCU0U',
+    appId: '1:350014991052:ios:0ccf8721f9ce92a2a33069',
+    messagingSenderId: '350014991052',
+    projectId: 'so-gio-gia-toc',
+    storageBucket: 'so-gio-gia-toc.firebasestorage.app',
+    iosBundleId: 'vn.buudienhatinh.sogio.soGioApp',
   );
 }
