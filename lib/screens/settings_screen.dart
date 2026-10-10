@@ -606,8 +606,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 10),
                   Text(
                     _googleUserEmail != null
-                        ? 'Tài khoản Google: $_googleUserEmail\nĐang đồng bộ cho dòng họ theo Mã kết nối gia đình bên dưới.'
-                        : 'Dữ liệu đang được lưu an toàn trên máy. Đăng nhập tài khoản Google để tự động đồng bộ giữa máy tính và điện thoại của vợ/chồng hoặc người thân.',
+                        ? 'Tài khoản Google: $_googleUserEmail\nCác thay đổi trên thiết bị không tự tải lên. Chỉ tải lên hoặc kéo về khi bạn bấm nút tương ứng và Firestore đã được cấu hình an toàn.'
+                        : 'Dữ liệu hiện được lưu trên thiết bị. Đăng nhập Google là bước chuẩn bị để đồng bộ thủ công sau khi Firestore được cấu hình an toàn.',
                     style: const TextStyle(fontSize: 13, color: Colors.grey, height: 1.4),
                   ),
                   const SizedBox(height: 14),
@@ -1660,7 +1660,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: const [
             Icon(Icons.menu_book_outlined, color: Color(0xFF8B1E0F)),
             SizedBox(width: 8),
-            Text('Hướng Dẫn Google Cloud', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Text('Hướng Dẫn Đồng Bộ An Toàn', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
         content: SingleChildScrollView(
@@ -1669,30 +1669,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
               Text(
-                '3 Bước Đơn Giản Để Đám Mây Hoạt Động Vĩnh Viễn Không Bị Hết Hạn:',
+                'Trước khi đồng bộ dữ liệu gia tộc:',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF8B1E0F)),
               ),
               SizedBox(height: 12),
               Text(
-                '1️⃣ Chuyển OAuth sang "In Production":\n'
-                '• Vào Google Cloud Console -> APIs & Services -> OAuth consent screen.\n'
-                '• Tại mục "Publishing status", bấm nút "Publish App" -> Chọn "Confirm".\n'
-                '• Token đăng nhập sẽ dùng vĩnh viễn không bao giờ hết hạn.',
+                '1. Đăng nhập Google chỉ xác thực tài khoản. Dữ liệu trên máy không tự động tải lên đám mây; phiên đăng nhập có thể hết hạn hoặc bị thu hồi.',
                 style: TextStyle(fontSize: 12.5, height: 1.4),
               ),
               SizedBox(height: 10),
               Text(
-                '2️⃣ Mở Firestore Database vĩnh viễn:\n'
-                '• Vào Firebase Console -> Firestore Database -> Thẻ "Rules".\n'
-                '• Thay quy tắc thành: "allow read, write: if true;" để không bị tự khóa sau 30 ngày dùng thử.\n'
-                '• Bấm "Publish".',
+                '2. Chỉ dùng Cloud Firestore sau khi quy tắc bảo mật giới hạn quyền đọc và ghi cho đúng thành viên gia tộc. Không mở quyền truy cập công khai hoặc cho mọi tài khoản đã đăng nhập. Nếu Firestore chưa được tạo và cấu hình, các nút tải lên/kéo về sẽ không hoạt động.',
                 style: TextStyle(fontSize: 12.5, height: 1.4),
               ),
               SizedBox(height: 10),
               Text(
-                '3️⃣ Lấy API Key & Project ID:\n'
-                '• Vào Firebase Console -> Project Settings (biểu tượng bánh răng) -> Cuộn xuống mục Your apps -> Web app.\n'
-                '• Copy apiKey và projectId dán vào nút "Cấu Hình Khóa Firebase Riêng".',
+                '3. Ứng dụng đã có cấu hình Firebase của dự án này. Mục "Cấu Hình Khóa Firebase Riêng" chỉ dành cho người quản trị dùng dự án Firebase khác. Hãy giữ bản sao lưu dữ liệu trên thiết bị trước khi đồng bộ.',
                 style: TextStyle(fontSize: 12.5, height: 1.4),
               ),
             ],
