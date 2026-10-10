@@ -1,1 +1,7 @@
 .vercel
+*.apk
+/family.css
+/family.js
+/index_flutter_legacy.html
+/qr_app.png
+/sw.js

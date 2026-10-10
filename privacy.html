@@ -35,14 +35,14 @@
 
     <h2>2. Cách sử dụng và lưu trữ</h2>
     <p>Ứng dụng lưu các sự kiện, ghi chú, hồ sơ gia đình và cài đặt trên thiết bị; trên website, dữ liệu này nằm trong bộ nhớ cục bộ của trình duyệt. Dữ liệu được dùng để hiển thị lịch, gia phả, lời nhắc và tạo bản sao lưu theo thao tác của bạn. Phần lớn chức năng không yêu cầu đăng nhập Google.</p>
-    <p>Nếu dịch vụ đồng bộ đám mây được kích hoạt và bạn chủ động tải dữ liệu lên, ứng dụng có thể gửi mã kết nối gia đình, hồ sơ, sự kiện, ghi chú, gia phả, thời điểm cập nhật và tên hoặc email tài khoản đang đăng nhập đến Cloud Firestore của dự án <code>so-gio-gia-toc</code>. Mã kết nối được dùng để tìm bộ dữ liệu của gia đình; không nên chia sẻ mã này công khai.</p>
+    <p>Nếu dịch vụ đồng bộ đám mây được kích hoạt và bạn chủ động tải dữ liệu lên, ứng dụng có thể gửi mã kết nối gia đình, mã tài khoản chủ sở hữu, email người thân được cấp quyền xem, hồ sơ, sự kiện, ghi chú, gia phả, số phiên bản, thời điểm cập nhật và tên hoặc email tài khoản đang đăng nhập đến Cloud Firestore của dự án <code>so-gio-gia-toc</code>. Mã kết nối dùng để tìm bộ dữ liệu; quyền đọc và ghi còn được kiểm tra theo tài khoản Google.</p>
 
     <h2>3. Bên cung cấp dịch vụ và việc chia sẻ</h2>
     <p>Google cung cấp dịch vụ đăng nhập và Firebase Authentication/Cloud Firestore cho các tính năng đám mây. GitHub Pages phục vụ website công khai. Website cũng tải phông chữ từ Google Fonts và biểu tượng từ cdnjs; khi truy cập các tài nguyên đó, trình duyệt có thể gửi thông tin kết nối như địa chỉ IP đến nhà cung cấp tương ứng. Việc xử lý của họ tuân theo chính sách riêng của từng dịch vụ.</p>
     <p>Ứng dụng không tự đăng công khai hồ sơ gia đình. Tệp sao lưu, bản in hoặc nội dung bạn chọn sao chép/chia sẻ chỉ được tạo theo thao tác của bạn. Mã ứng dụng hiện tại không tích hợp quảng cáo hoặc công cụ phân tích hành vi người dùng.</p>
 
     <h2>4. Thời gian lưu và lựa chọn của bạn</h2>
-    <p>Dữ liệu cục bộ còn trên thiết bị cho đến khi bạn xóa trong ứng dụng, xóa dữ liệu của trình duyệt hoặc gỡ ứng dụng; tệp sao lưu đã xuất do bạn tự quản lý. Dữ liệu đã đồng bộ trên Firestore có thể vẫn tồn tại sau khi bạn đăng xuất hoặc xóa bản cục bộ. Nếu cần xem, sửa hoặc yêu cầu xóa dữ liệu đám mây liên quan đến gia đình hay tài khoản của mình, hãy liên hệ theo email bên dưới và cung cấp thông tin cần thiết để xác minh yêu cầu.</p>
+    <p>Dữ liệu cục bộ còn trên thiết bị cho đến khi bạn xóa trong ứng dụng, xóa dữ liệu của trình duyệt hoặc gỡ ứng dụng; tệp sao lưu JSON đã xuất là văn bản chưa mã hóa và do bạn tự quản lý. Dữ liệu đã đồng bộ trên Firestore có thể vẫn tồn tại sau khi bạn đăng xuất hoặc xóa bản cục bộ. Nếu cần xem, sửa hoặc yêu cầu xóa dữ liệu đám mây liên quan đến gia đình hay tài khoản của mình, hãy liên hệ theo email bên dưới và cung cấp thông tin cần thiết để xác minh yêu cầu.</p>
 
     <h2>5. Bảo vệ dữ liệu và thông tin người thân</h2>
     <p>Hãy bảo vệ thiết bị, tài khoản Google, tệp sao lưu và mã kết nối gia đình. Trước khi nhập thông tin của người thân, nhất là trẻ em, hãy bảo đảm bạn có quyền chia sẻ thông tin đó trong phạm vi sử dụng của gia đình. Không gửi dữ liệu nhạy cảm qua các kênh chia sẻ công khai nếu bạn không muốn người khác xem được.</p>
