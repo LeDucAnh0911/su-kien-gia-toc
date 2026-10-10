@@ -1,8 +1,8 @@
 'use strict';
 
-const CACHE_NAME = 'su-kien-gia-toc-v20261011-1';
+const CACHE_NAME = 'su-kien-gia-toc-v20261011-2';
 
-// Danh sách tài nguyên cốt lõi cần nạp sẵn để mở tức thì (< 1 giây) trên iPhone & Android
+// Danh sách tài nguyên cốt lõi cần nạp sẵn để dùng khi mất mạng.
 const PRECACHE_ASSETS = [
   './',
   'index.html',
@@ -57,16 +57,9 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Bỏ qua các yêu cầu không phải GET hoặc dịch vụ đồng bộ Firebase / Google
+  // Chỉ quản lý tài nguyên GET của chính ứng dụng này.
   if (req.method !== 'GET') return;
-  if (url.origin !== self.location.origin) {
-    if (url.hostname.includes('firebase') ||
-        url.hostname.includes('firestore') ||
-        url.hostname.includes('googleapis.com') ||
-        url.hostname.includes('google.com')) {
-      return;
-    }
-  }
+  if (url.origin !== self.location.origin) return;
 
   // Đối với trang HTML điều hướng: Network-First có Cache fallback để luôn cập nhật
   if (req.mode === 'navigate' || req.destination === 'document') {
@@ -80,7 +73,9 @@ self.addEventListener('fetch', (event) => {
           return networkRes;
         })
         .catch(() => {
-          return caches.match(req).then((cached) => cached || caches.match('./') || caches.match('index.html'));
+          return caches.open(CACHE_NAME).then((cache) =>
+            cache.match(req).then((cached) => cached || cache.match('./') || cache.match('index.html'))
+          );
         })
     );
     return;
@@ -88,7 +83,7 @@ self.addEventListener('fetch', (event) => {
 
   // Đối với toàn bộ tài nguyên tĩnh (JS, WASM, Fonts, Images, CSS): Cache-First cực nhanh
   event.respondWith(
-    caches.match(req).then((cachedRes) => {
+    caches.open(CACHE_NAME).then((cache) => cache.match(req)).then((cachedRes) => {
       if (cachedRes) {
         return cachedRes;
       }
