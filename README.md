@@ -4,10 +4,13 @@
 
 ## Trạng thái hiện tại
 
-- Dữ liệu được lưu trên thiết bị. Người dùng mới bắt đầu với sổ trống; dữ liệu đã lưu trên thiết bị cũ được giữ nguyên.
+- Dữ liệu sự kiện, ghi chú, gia phả và hồ sơ được lưu trong Sembast (IndexedDB trên web). Bản cũ trong `shared_preferences` được chuyển một lần bằng giao dịch; bản cũ được giữ để khôi phục cho đến khi người dùng chủ động xóa dữ liệu trên thiết bị.
 - Sao lưu và phục hồi qua tệp JSON. Tệp JSON là văn bản chưa mã hóa, cần giữ riêng tư.
+- Ngày âm lịch, tháng nhuận và ngày nhập không hợp lệ được kiểm tra trước khi lưu. Khi năm tới không có tháng nhuận tương ứng, sự kiện gốc tháng nhuận dùng cùng ngày ở tháng thường.
+- Lời nhắc hiện khi mở ứng dụng; chưa có thông báo hệ điều hành khi ứng dụng đã đóng.
 - Google Sign-In đã được cấu hình cho dự án Firebase `so-gio-gia-toc`. Đăng nhập không tự đồng bộ.
 - Đồng bộ Firestore là thao tác thủ công. Cloud Firestore và `firestore.rules` phải được triển khai an toàn trước khi sử dụng dữ liệu thật. Hiện chưa công bố tính năng này là đã hoạt động.
+- Chủ gia tộc có thể cấp và thu hồi quyền xem theo email. Dữ liệu tải về máy người khác trước khi thu hồi vẫn còn trên máy họ. Ứng dụng chặn bản tải lên quá lớn cho một tài liệu Firestore; cần chuyển sang nhiều tài liệu trước khi gia phả lớn được đồng bộ.
 - Không có thanh toán hoặc gói VIP đang bán. Bản thử nghiệm được dùng miễn phí.
 
 ## Phát triển

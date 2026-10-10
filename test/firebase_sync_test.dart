@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sembast/sembast_memory.dart';
 import 'package:so_gio_app/services/storage_service.dart';
 import 'package:so_gio_app/services/firebase_sync_service.dart';
 import 'package:so_gio_app/services/family_sync_code.dart';
@@ -12,7 +13,7 @@ void main() {
 
     setUp(() {
       SharedPreferences.setMockInitialValues({});
-      storageService = StorageService();
+      storageService = StorageService(databaseFactory: newDatabaseFactoryMemory());
     });
 
     test('Lưu và đọc Mã kết nối gia đình (Family Sync Code)', () async {
@@ -81,6 +82,27 @@ void main() {
 
       expect(result.success, isFalse);
       expect(result.message, contains('Family Sync Code'));
+    });
+
+    test('Từ chối dữ liệu vượt kích thước tài liệu Firestore trước khi gửi', () async {
+      final result = await FirebaseSyncService().uploadFamilyData(
+        familySyncCode: FamilySyncCode.generate(),
+        events: [],
+        notes: [],
+        familyPeople: [],
+        profile: UserProfile(giaChu: 'x' * 850000),
+      );
+      expect(result.success, isFalse);
+      expect(result.message, contains('quá lớn'));
+    });
+
+    test('Từ chối email không hợp lệ khi thu hồi quyền', () async {
+      final result = await FirebaseSyncService().revokeViewerAccess(
+        FamilySyncCode.generate(),
+        'khong-phai-email',
+      );
+      expect(result.success, isFalse);
+      expect(result.message, contains('Email'));
     });
   });
 }

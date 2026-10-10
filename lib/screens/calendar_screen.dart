@@ -173,7 +173,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: selectedDayEvents.isEmpty && selectedDayNotes.isEmpty
+          ? null
+          : FloatingActionButton(
         backgroundColor: primaryRed,
         foregroundColor: Colors.white,
         tooltip: 'Thêm ghi chú cho ngày đang chọn',

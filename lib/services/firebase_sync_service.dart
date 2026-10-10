@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -181,6 +182,18 @@ class FirebaseSyncService {
           message: 'Mã kết nối gia đình (Family Sync Code) chưa hợp lệ. Hãy tạo mã mới trong Cài đặt.',
         );
       }
+      final familyData = <String, dynamic>{
+        'profile': profile.toMap(),
+        'events': events.map((e) => e.toMap()).toList(),
+        'notes': notes.map((n) => n.toMap()).toList(),
+        'familyPeople': familyPeople.map((p) => p.toMap()).toList(),
+      };
+      if (utf8.encode(jsonEncode(familyData)).length > 850000) {
+        return const CloudSyncResult(
+          success: false,
+          message: 'Dữ liệu gia tộc quá lớn cho một bản đám mây. Hãy giảm số ảnh trong gia phả hoặc xuất bản sao lưu trước khi thử lại.',
+        );
+      }
       final user = await _signedInUser();
       if (user == null) {
         return const CloudSyncResult(
@@ -203,10 +216,7 @@ class FirebaseSyncService {
         'updatedAtIso': DateTime.now().toIso8601String(),
         'updatedByEmail': user.email ?? '',
         'updatedByName': user.displayName ?? profile.giaChu,
-        'profile': profile.toMap(),
-        'events': events.map((e) => e.toMap()).toList(),
-        'notes': notes.map((n) => n.toMap()).toList(),
-        'familyPeople': familyPeople.map((p) => p.toMap()).toList(),
+        ...familyData,
       };
       final revision = await _firestore!.runTransaction<int>((
         transaction,
@@ -337,7 +347,19 @@ class FirebaseSyncService {
   Future<CloudSyncResult> grantViewerAccess(
     String familySyncCode,
     String email,
-  ) async {
+  ) => _changeViewerAccess(familySyncCode, email, grant: true);
+
+  /// Chủ gia tộc có thể thu hồi quyền xem của một email đã mời.
+  Future<CloudSyncResult> revokeViewerAccess(
+    String familySyncCode,
+    String email,
+  ) => _changeViewerAccess(familySyncCode, email, grant: false);
+
+  Future<CloudSyncResult> _changeViewerAccess(
+    String familySyncCode,
+    String email, {
+    required bool grant,
+  }) async {
     try {
       final code = FamilySyncCode.normalize(familySyncCode);
       final viewerEmail = email.trim().toLowerCase();
@@ -383,21 +405,28 @@ class FirebaseSyncService {
         final emails = List<String>.from(
           data['memberEmails'] ?? const <String>[],
         );
-        if (emails.contains(viewerEmail)) return;
-        if (emails.length >= 50) {
-          throw const _SyncProblem(
-            'Gia tộc đã đạt giới hạn 50 tài khoản được mời.',
-          );
+        if (grant) {
+          if (emails.contains(viewerEmail)) return;
+          if (emails.length >= 50) {
+            throw const _SyncProblem(
+              'Gia tộc đã đạt giới hạn 50 tài khoản được mời.',
+            );
+          }
+          emails.add(viewerEmail);
+        } else {
+          if (!emails.remove(viewerEmail)) {
+            throw const _SyncProblem('Email này chưa được cấp quyền xem.');
+          }
         }
-        emails.add(viewerEmail);
         transaction.update(docRef, {
           'memberEmails': emails,
         });
       });
       return CloudSyncResult(
         success: true,
-        message:
-            'Đã cấp quyền xem cho $viewerEmail. Thành viên cần đăng nhập đúng email này và kéo dữ liệu về.',
+        message: grant
+            ? 'Đã cấp quyền xem cho $viewerEmail. Thành viên cần đăng nhập đúng email này và kéo dữ liệu về.'
+            : 'Đã thu hồi quyền xem của $viewerEmail trên đám mây. Bản sao người này đã tải về thiết bị vẫn còn.',
       );
     } catch (e) {
       return _failure(e);

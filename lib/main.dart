@@ -39,11 +39,14 @@ class SoGioApp extends StatefulWidget {
 
 class _SoGioAppState extends State<SoGioApp> {
   final StorageService _storageService = StorageService();
+  final GlobalKey<ScaffoldMessengerState> _messengerKey =
+      GlobalKey<ScaffoldMessengerState>();
   List<EventItem> _events = [];
   List<DailyNoteItem> _notes = [];
   List<FamilyPerson> _familyPeople = [];
   UserProfile _profile = UserProfile();
   bool _isLoading = true;
+  String? _loadError;
   int _currentTabIndex = 0;
 
   @override
@@ -53,17 +56,30 @@ class _SoGioAppState extends State<SoGioApp> {
   }
 
   Future<void> _loadData() async {
-    final loadedEvents = await _storageService.loadEvents();
-    final loadedNotes = await _storageService.loadNotes();
-    final loadedProfile = await _storageService.loadProfile();
-    final loadedFamily = await _storageService.loadFamilyPeople();
-    setState(() {
-      _events = loadedEvents;
-      _notes = loadedNotes;
-      _profile = loadedProfile;
-      _familyPeople = loadedFamily;
-      _isLoading = false;
-    });
+    try {
+      final loadedEvents = await _storageService.loadEvents();
+      final loadedNotes = await _storageService.loadNotes();
+      final loadedProfile = await _storageService.loadProfile();
+      final loadedFamily = await _storageService.loadFamilyPeople();
+      if (!mounted) return;
+      setState(() {
+        _events = loadedEvents;
+        _notes = loadedNotes;
+        _profile = loadedProfile;
+        _familyPeople = loadedFamily;
+        _loadError = null;
+        _isLoading = false;
+      });
+    } catch (error) {
+      debugPrint('Không đọc được dữ liệu cục bộ: $error');
+      if (!mounted) return;
+      setState(() {
+        _loadError = 'Không đọc được dữ liệu đã lưu. Dữ liệu cũ chưa bị xóa. '
+            'Hãy giữ ứng dụng và bộ nhớ trình duyệt nguyên trạng, rồi liên hệ hỗ trợ để khôi phục.';
+        _isLoading = false;
+      });
+      return;
+    }
 
     final inviteCode =
         Uri.base.queryParameters['family'] ?? Uri.base.queryParameters['join'];
@@ -75,6 +91,29 @@ class _SoGioAppState extends State<SoGioApp> {
           _promptJoinFamily(code);
         });
       }
+    }
+  }
+
+  Future<void> _persist(Future<void> operation) async {
+    try {
+      await operation;
+      _messengerKey.currentState?.clearMaterialBanners();
+    } catch (error) {
+      debugPrint('Không lưu được dữ liệu: $error');
+      final messenger = _messengerKey.currentState;
+      if (messenger == null) return;
+      messenger.clearMaterialBanners();
+      messenger.showMaterialBanner(MaterialBanner(
+        content: const Text(
+          'Chưa lưu được thay đổi. Hãy giữ ứng dụng mở và xuất bản sao lưu trong Cài đặt.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: messenger.clearMaterialBanners,
+            child: const Text('Đóng'),
+          ),
+        ],
+      ));
     }
   }
 
@@ -156,7 +195,7 @@ class _SoGioAppState extends State<SoGioApp> {
   // --- QUẢN LÝ SỰ KIỆN GIỖ ---
   void _onEventAdded(EventItem event) {
     setState(() => _events.add(event));
-    _storageService.saveEvents(_events);
+    _persist(_storageService.saveEvents(List.of(_events)));
   }
 
   void _onEventUpdated(EventItem updatedEvent) {
@@ -164,18 +203,18 @@ class _SoGioAppState extends State<SoGioApp> {
       final index = _events.indexWhere((e) => e.id == updatedEvent.id);
       if (index != -1) _events[index] = updatedEvent;
     });
-    _storageService.saveEvents(_events);
+    _persist(_storageService.saveEvents(List.of(_events)));
   }
 
   void _onEventDeleted(String eventId) {
     setState(() => _events.removeWhere((e) => e.id == eventId));
-    _storageService.saveEvents(_events);
+    _persist(_storageService.saveEvents(List.of(_events)));
   }
 
   // --- QUẢN LÝ GHI CHÚ THEO NGÀY ---
   void _onNoteAdded(DailyNoteItem note) {
     setState(() => _notes.add(note));
-    _storageService.saveNotes(_notes);
+    _persist(_storageService.saveNotes(List.of(_notes)));
   }
 
   void _onNoteUpdated(DailyNoteItem updatedNote) {
@@ -183,12 +222,12 @@ class _SoGioAppState extends State<SoGioApp> {
       final index = _notes.indexWhere((n) => n.id == updatedNote.id);
       if (index != -1) _notes[index] = updatedNote;
     });
-    _storageService.saveNotes(_notes);
+    _persist(_storageService.saveNotes(List.of(_notes)));
   }
 
   void _onNoteDeleted(String noteId) {
     setState(() => _notes.removeWhere((n) => n.id == noteId));
-    _storageService.saveNotes(_notes);
+    _persist(_storageService.saveNotes(List.of(_notes)));
   }
 
   void _onFamilySaved(FamilyPerson person) {
@@ -202,7 +241,7 @@ class _SoGioAppState extends State<SoGioApp> {
         return p.copyWith(spouseIds: spouses);
       }).toList();
     });
-    _storageService.saveFamilyPeople(_familyPeople);
+    _persist(_storageService.saveFamilyPeople(List.of(_familyPeople)));
   }
 
   void _onFamilyDeleted(String id) {
@@ -218,13 +257,13 @@ class _SoGioAppState extends State<SoGioApp> {
           )
           .toList();
     });
-    _storageService.saveFamilyPeople(_familyPeople);
+    _persist(_storageService.saveFamilyPeople(List.of(_familyPeople)));
   }
 
   // --- PROFILE & RESTORE ---
   void _onProfileUpdated(UserProfile newProfile) {
     setState(() => _profile = newProfile);
-    _storageService.saveProfile(newProfile);
+    _persist(_storageService.saveProfile(newProfile));
   }
 
   void _onDataRestored(
@@ -301,6 +340,7 @@ class _SoGioAppState extends State<SoGioApp> {
 
     return MaterialApp(
       title: 'Sự Kiện Gia Tộc',
+      scaffoldMessengerKey: _messengerKey,
       debugShowCheckedModeBanner: false,
       theme: isDark ? darkTheme : lightTheme,
       home: _isLoading
@@ -329,7 +369,31 @@ class _SoGioAppState extends State<SoGioApp> {
                 ),
               ),
             )
-          : LayoutBuilder(
+          : _loadError != null
+              ? Scaffold(
+                  body: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.error_outline, size: 48),
+                          const SizedBox(height: 12),
+                          Text(_loadError!, textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          FilledButton(
+                            onPressed: () {
+                              setState(() => _isLoading = true);
+                              _loadData();
+                            },
+                            child: const Text('Thử đọc lại'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              : LayoutBuilder(
               builder: (context, constraints) {
                 final isWideScreen = constraints.maxWidth >= 820;
 

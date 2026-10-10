@@ -88,8 +88,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           ],
 
           // CARD 2: THÔNG TIN NGƯỜI ĐƯỢC TƯỞNG NHỚ
-          _buildPersonInfoCard(isDark),
-          const SizedBox(height: 16),
+          if (_currentEvent.type == EventType.deathAnniversary ||
+              (_currentEvent.personName?.isNotEmpty ?? false)) ...[
+            _buildPersonInfoCard(isDark),
+            const SizedBox(height: 16),
+          ],
 
           // CARD 3: DANH SÁCH MÂM CỖ & ĐỒ CẦN SẮM
           _buildDishesCard(isDark),
@@ -101,14 +104,18 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   Widget _buildCountdownCard(EventOccurrence occ, bool isDark) {
     final dateFormat = DateFormat('dd/MM/yyyy');
+    final isDeathAnniversary =
+        _currentEvent.type == EventType.deathAnniversary;
     String statusText;
     Color statusBg;
 
     if (occ.daysRemaining == 0) {
-      statusText = 'HÔM NAY - CHÍNH KỴ';
+      statusText = isDeathAnniversary ? 'Hôm nay · Chính kỵ' : 'Hôm nay';
       statusBg = Colors.red;
     } else if (occ.daysRemaining == 1) {
-      statusText = 'NGÀY MAI (HÔM NAY TIÊN THƯỜNG)';
+      statusText = isDeathAnniversary && _currentEvent.remindTienThuong
+          ? 'Ngày mai · Hôm nay tiên thường'
+          : 'Ngày mai';
       statusBg = Colors.orange;
     } else {
       statusText = 'Còn ${occ.daysRemaining} ngày nữa';
@@ -133,7 +140,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -150,10 +160,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     ),
                   ),
                 ),
-                const Spacer(),
                 if (occ.anniversaryCount != null)
                   Text(
-                    'Giỗ lần thứ ${occ.anniversaryCount}',
+                    isDeathAnniversary
+                        ? 'Giỗ lần thứ ${occ.anniversaryCount}'
+                        : _currentEvent.type == EventType.birthday
+                            ? '${occ.anniversaryCount} tuổi'
+                            : 'Năm thứ ${occ.anniversaryCount}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: isDark ? Colors.amber : const Color(0xFF8B2500),
@@ -168,7 +181,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Chính kỵ (Dương lịch):', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text(isDeathAnniversary ? 'Chính kỵ (Dương lịch):' : 'Ngày diễn ra (Dương lịch):',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey)),
                       Text(
                         dateFormat.format(occ.nextSolarDate),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -176,7 +190,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     ],
                   ),
                 ),
-                if (occ.tienThuongSolarDate != null)
+                if (isDeathAnniversary && occ.tienThuongSolarDate != null)
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,12 +214,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               children: [
                 Icon(Icons.calendar_today, size: 14, color: isDark ? Colors.amber : const Color(0xFF8B2500)),
                 const SizedBox(width: 6),
-                Text(
+                Flexible(child: Text(
                   _currentEvent.calendar == CalendarType.lunar
-                      ? 'Âm lịch: Ngày ${occ.adjustedDay}/${_currentEvent.month} Âm ${occ.adjustedDay != _currentEvent.day ? "(Cúng bù ngày 29 do tháng thiếu)" : ""}'
+                      ? 'Âm lịch: ${occ.adjustedDay}/${_currentEvent.month}${_currentEvent.isLeapMonth ? " (gốc: tháng nhuận)" : ""}${occ.adjustedDay != _currentEvent.day ? " · Tháng thiếu dùng ngày 29" : ""}'
                       : 'Dương lịch: Ngày ${_currentEvent.day}/${_currentEvent.month}',
                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                ),
+                )),
               ],
             ),
           ],
@@ -296,7 +310,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             _infoRow('Họ và tên:', _currentEvent.personName ?? 'Chưa rõ'),
             _infoRow('Vai vế / Quan hệ:', _currentEvent.relation ?? 'Chưa rõ'),
             if (_currentEvent.year != null)
-              _infoRow('Năm mất:', '${_currentEvent.year} ${_currentEvent.ageAtDeath != null ? "(Hưởng thọ ${_currentEvent.ageAtDeath} tuổi)" : ""}'),
+              _infoRow(
+                _currentEvent.type == EventType.deathAnniversary
+                    ? 'Năm mất:'
+                    : _currentEvent.type == EventType.birthday
+                        ? 'Năm sinh:'
+                        : 'Năm gốc:',
+                '${_currentEvent.year} ${_currentEvent.type == EventType.deathAnniversary && _currentEvent.ageAtDeath != null ? "(Hưởng thọ ${_currentEvent.ageAtDeath} tuổi)" : ""}',
+              ),
             if (_currentEvent.restingPlace != null && _currentEvent.restingPlace!.isNotEmpty)
               _infoRow('Nơi an nghỉ:', _currentEvent.restingPlace!),
             if (_currentEvent.notes != null && _currentEvent.notes!.isNotEmpty) ...[

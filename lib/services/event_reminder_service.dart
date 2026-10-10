@@ -105,7 +105,7 @@ class EventReminderService {
       final days = occ.daysRemaining;
 
       // 1. Nhắc đúng ngày (Hôm nay)
-      if (days == 0 && _settings.remindChinhKy) {
+      if (days == 0 && _settings.remindChinhKy && ev.remindChinhKy) {
         if (ev.type == EventType.birthday) {
           alerts.add(ReminderAlert(
             id: '${ev.id}_today',
@@ -115,11 +115,20 @@ class EventReminderService {
             alertType: 'today',
             event: ev,
           ));
-        } else {
+        } else if (ev.type == EventType.deathAnniversary) {
           alerts.add(ReminderAlert(
             id: '${ev.id}_today',
             title: '🕯️ Hôm nay: Lễ Chính Kỵ ${ev.title}',
             message: 'Đúng ngày giỗ (Ngày ${occ.adjustedDay}/${ev.month} Âm). Gia đình dâng mâm cỗ dâng hương tưởng niệm.',
+            targetDate: occ.nextSolarDate,
+            alertType: 'today',
+            event: ev,
+          ));
+        } else {
+          alerts.add(ReminderAlert(
+            id: '${ev.id}_today',
+            title: 'Hôm nay: ${ev.title}',
+            message: 'Sự kiện diễn ra hôm nay. Mở chi tiết để xem thông tin.',
             targetDate: occ.nextSolarDate,
             alertType: 'today',
             event: ev,
@@ -129,7 +138,7 @@ class EventReminderService {
 
       // 2. Nhắc ngày mai / Chiều Lễ Tiên Thường
       if (days == 1) {
-        if (ev.type == EventType.deathAnniversary && _settings.remindTienThuong) {
+        if (ev.type == EventType.deathAnniversary && _settings.remindTienThuong && ev.remindTienThuong) {
           alerts.add(ReminderAlert(
             id: '${ev.id}_tien_thuong',
             title: '🌸 Chiều nay: Lễ Tiên Thường ${ev.title}',
@@ -151,11 +160,13 @@ class EventReminderService {
       }
 
       // 3. Nhắc trước X ngày (mặc định 3 ngày hoặc theo cài đặt)
-      if (days > 1 && days <= _settings.advanceDays) {
+      if (days > 1 && days <= _settings.advanceDays && days <= ev.advanceDays) {
         alerts.add(ReminderAlert(
           id: '${ev.id}_advance_$days',
           title: '⏳ Còn $days ngày nữa: ${ev.title}',
-          message: 'Sự kiện vào ngày ${occ.adjustedDay}/${ev.month} Âm (${occ.nextSolarDate.day}/${occ.nextSolarDate.month} Dương). Hãy chuẩn bị sắm lễ và cỗ bàn.',
+          message: ev.type == EventType.deathAnniversary
+              ? 'Ngày giỗ ${occ.adjustedDay}/${ev.month} Âm (${occ.nextSolarDate.day}/${occ.nextSolarDate.month} Dương). Hãy chuẩn bị theo nếp nhà.'
+              : 'Sự kiện vào ngày ${occ.nextSolarDate.day}/${occ.nextSolarDate.month} Dương. Hãy chuẩn bị trước.',
           targetDate: occ.nextSolarDate,
           alertType: 'advance',
           event: ev,

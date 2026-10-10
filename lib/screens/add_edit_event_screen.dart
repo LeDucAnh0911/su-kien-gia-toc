@@ -1,6 +1,7 @@
 /// Màn hình Thêm / Sửa Ngày Giỗ & Sự Kiện
 import 'package:flutter/material.dart';
 import '../models/event_model.dart';
+import '../lunar_engine.dart';
 
 class AddEditEventScreen extends StatefulWidget {
   final EventItem? event;
@@ -19,6 +20,7 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
   late CalendarType _calendar;
   late int _day;
   late int _month;
+  late bool _isLeapMonth;
   int? _year;
   late String _personName;
   late String _relation;
@@ -39,6 +41,7 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
       _calendar = ev.calendar;
       _day = ev.day;
       _month = ev.month;
+      _isLeapMonth = ev.isLeapMonth;
       _year = ev.year;
       _personName = ev.personName ?? '';
       _relation = ev.relation ?? '';
@@ -52,8 +55,13 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
       _title = '';
       _type = EventType.deathAnniversary;
       _calendar = CalendarType.lunar;
-      _day = 15;
-      _month = 8;
+      final today = DateTime.now();
+      final lunar = VietnameseLunarEngine.solarToLunar(
+        today.day, today.month, today.year,
+      );
+      _day = lunar.day;
+      _month = lunar.month;
+      _isLeapMonth = lunar.isLeap;
       _year = null;
       _personName = '';
       _relation = '';
@@ -73,7 +81,7 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Sửa Ngày Giỗ / Sự Kiện' : 'Thêm Ngày Giỗ Mới'),
+        title: Text(isEditing ? 'Sửa sự kiện' : 'Thêm sự kiện'),
         backgroundColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF8B2500),
         foregroundColor: Colors.white,
         actions: [
@@ -104,17 +112,21 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
                       segments: const [
                         ButtonSegment(
                           value: CalendarType.lunar,
-                          label: Text('Âm Lịch (Ngày Giỗ)'),
+                          label: Text('Âm lịch'),
                           icon: Icon(Icons.nightlight_round),
                         ),
                         ButtonSegment(
                           value: CalendarType.solar,
-                          label: Text('Dương Lịch'),
+                          label: Text('Dương lịch'),
                           icon: Icon(Icons.wb_sunny_rounded),
                         ),
                       ],
                       selected: {_calendar},
-                      onSelectionChanged: (set) => setState(() => _calendar = set.first),
+                      onSelectionChanged: (set) => setState(() {
+                        _calendar = set.first;
+                        if (_calendar == CalendarType.solar) _isLeapMonth = false;
+                        _day = _day.clamp(1, _maxSelectableDay());
+                      }),
                     ),
                   ],
                 ),
@@ -188,7 +200,7 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             ),
-                            items: List.generate(31, (i) => i + 1).map((d) {
+                            items: List.generate(_maxSelectableDay(), (i) => i + 1).map((d) {
                               return DropdownMenuItem(value: d, child: Text('$d'));
                             }).toList(),
                             onChanged: (val) {
@@ -202,7 +214,7 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
                           child: DropdownButtonFormField<int>(
                             value: _month,
                             decoration: const InputDecoration(
-                              labelText: 'Tháng',
+                                labelText: 'Tháng',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             ),
@@ -210,33 +222,67 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
                               return DropdownMenuItem(value: m, child: Text('Tháng $m'));
                             }).toList(),
                             onChanged: (val) {
-                              if (val != null) setState(() => _month = val);
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Năm mất (tùy chọn)
-                        Expanded(
-                          child: TextFormField(
-                            initialValue: _year?.toString() ?? '',
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Năm (tuỳ chọn)',
-                              hintText: 'VD: 2015',
-                              border: OutlineInputBorder(),
-                              contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            ),
-                            onSaved: (val) {
-                              if (val != null && val.trim().isNotEmpty) {
-                                _year = int.tryParse(val.trim());
-                              } else {
-                                _year = null;
-                              }
+                              if (val != null) setState(() {
+                                _month = val;
+                                _day = _day.clamp(1, _maxSelectableDay());
+                              });
                             },
                           ),
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      initialValue: _year?.toString() ?? '',
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: _type == EventType.deathAnniversary
+                            ? 'Năm mất (nếu biết)'
+                            : 'Năm gốc (nếu biết)',
+                        hintText: 'Ví dụ: 2015',
+                        border: const OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        final raw = value?.trim() ?? '';
+                        if (raw.isEmpty) return null;
+                        final year = int.tryParse(raw);
+                        if (year == null || year < 1900 || year > 2200) {
+                          return 'Nhập năm từ 1900 đến 2200';
+                        }
+                        if (_calendar == CalendarType.solar &&
+                            _day > DateTime(year, _month + 1, 0).day) {
+                          return 'Ngày này không có trong năm $year';
+                        }
+                        if (_calendar == CalendarType.lunar && _isLeapMonth &&
+                            VietnameseLunarEngine.lunarToSolar(
+                              1, _month, year, isLeap: true,
+                            ) == null) {
+                          return 'Năm $year không có tháng $_month nhuận';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        final nextYear = int.tryParse(value.trim());
+                        if (nextYear != _year) {
+                          setState(() {
+                            _year = nextYear;
+                          });
+                        }
+                      },
+                      onSaved: (value) => _year = int.tryParse(value?.trim() ?? ''),
+                    ),
+                    if (_calendar == CalendarType.lunar) ...[
+                      const SizedBox(height: 8),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Tháng nhuận'),
+                        subtitle: const Text(
+                          'Năm không có tháng nhuận này: dùng cùng ngày của tháng thường.',
+                        ),
+                        value: _isLeapMonth,
+                        onChanged: (value) => setState(() => _isLeapMonth = value),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -324,17 +370,21 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Cấu hình Thông Báo & Nhắc Nhở:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text('Nhắc khi mở ứng dụng', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    const Text('Ứng dụng hiện chưa gửi thông báo khi đã đóng.', style: TextStyle(fontSize: 12)),
                     const SizedBox(height: 8),
+                    if (_type == EventType.deathAnniversary)
+                      SwitchListTile(
+                        title: const Text('Hiện lời nhắc lễ tiên thường'),
+                        subtitle: const Text('Trong ứng dụng, từ hôm trước ngày giỗ'),
+                        value: _remindTienThuong,
+                        onChanged: (val) => setState(() => _remindTienThuong = val),
+                      ),
                     SwitchListTile(
-                      title: const Text('Nhắc Lễ Tiên Thường (Chiều hôm trước)'),
-                      subtitle: const Text('Báo vào 16:00 chiều hôm trước ngày giỗ chính'),
-                      value: _remindTienThuong,
-                      onChanged: (val) => setState(() => _remindTienThuong = val),
-                    ),
-                    SwitchListTile(
-                      title: const Text('Nhắc Lễ Chính Kỵ (Sáng đúng ngày)'),
-                      subtitle: const Text('Báo vào 06:30 sáng ngày giỗ'),
+                      title: Text(_type == EventType.deathAnniversary
+                          ? 'Hiện lời nhắc ngày giỗ'
+                          : 'Hiện lời nhắc đúng ngày'),
+                      subtitle: const Text('Trong ứng dụng, khi đến ngày sự kiện'),
                       value: _remindChinhKy,
                       onChanged: (val) => setState(() => _remindChinhKy = val),
                     ),
@@ -387,7 +437,7 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
               ),
               onPressed: _saveEvent,
               child: Text(
-                isEditing ? 'LƯU THAY ĐỔI' : 'TẠO NGÀY GIỖ MỚI',
+                isEditing ? 'Lưu thay đổi' : 'Tạo sự kiện',
                 style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
@@ -411,6 +461,7 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
         day: _day,
         month: _month,
         year: _year,
+        isLeapMonth: _calendar == CalendarType.lunar && _isLeapMonth,
         personName: _personName.isNotEmpty ? _personName : null,
         relation: _relation.isNotEmpty ? _relation : null,
         restingPlace: _restingPlace.isNotEmpty ? _restingPlace : null,
@@ -427,5 +478,11 @@ class _AddEditEventScreenState extends State<AddEditEventScreen> {
 
       Navigator.pop(context, newEvent);
     }
+  }
+
+  int _maxSelectableDay() {
+    if (_calendar == CalendarType.lunar) return 30;
+    // With an unknown year, retain 29 February as a valid recurring event.
+    return DateTime(2024, _month + 1, 0).day;
   }
 }

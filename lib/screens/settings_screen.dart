@@ -11,6 +11,7 @@ import '../services/backup_file_service.dart';
 import '../services/firebase_sync_service.dart';
 import '../services/family_sync_code.dart';
 import '../services/event_reminder_service.dart';
+import '../services/event_calculator.dart';
 import 'offerings_guide_screen.dart';
 import 'paywall_screen.dart';
 
@@ -216,13 +217,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: const [
                       Icon(Icons.person_pin, color: Color(0xFF8B2500)),
                       SizedBox(width: 8),
-                      Text(
-                        'Thông Tin Gia Chủ (Tự Điền Văn Khấn)',
+                      Expanded(child: Text(
+                        'Thông tin gia chủ',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
+                      )),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -265,18 +266,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: const [
                       Icon(Icons.print_outlined, color: Color(0xFF8B1E0F)),
                       SizedBox(width: 8),
-                      Text(
-                        'Xuất Sự Kiện Gia Tộc (Gửi Zalo / In Ấn)',
+                      Expanded(child: Text(
+                        'Chia sẻ danh sách sự kiện',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
+                      )),
                     ],
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Tổng hợp toàn bộ danh sách sự kiện, ngày giỗ, sinh nhật trong năm theo thứ tự tháng Âm lịch, tạo bản tin trang trọng để chia sẻ vào nhóm Zalo dòng họ hoặc in ra lưu giữ.',
+                    'Tổng hợp sự kiện sắp tới theo ngày diễn ra, để chia sẻ với gia đình hoặc in ra lưu giữ.',
                     style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   const SizedBox(height: 14),
@@ -311,7 +312,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         icon: const Icon(Icons.table_chart_outlined, size: 16),
-                        label: const Text('Xuất Excel Sự Kiện (.CSV)'),
+                        label: const Text('Xuất sự kiện (.CSV)'),
                         onPressed: () async {
                           final ok = await BackupFileService.exportEventsCsv(
                             context: context,
@@ -321,7 +322,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                  'Đã xuất danh sách Sự Kiện ra file Excel thành công!',
+                                  'Đã xuất danh sách sự kiện ra tệp CSV.',
                                 ),
                                 backgroundColor: Color(0xFF2E7D32),
                               ),
@@ -339,7 +340,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         icon: const Icon(Icons.people_alt_outlined, size: 16),
-                        label: const Text('Xuất Excel Gia Phả (.CSV)'),
+                        label: const Text('Xuất gia phả (.CSV)'),
                         onPressed: () async {
                           final ok = await BackupFileService.exportFamilyCsv(
                             context: context,
@@ -379,13 +380,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: const [
                       Icon(Icons.restaurant_menu, color: Color(0xFFD4AF37)),
                       SizedBox(width: 8),
-                      Text(
-                        'Cẩm Nang Sắm Lễ & Mâm Cỗ Truyền Thống',
+                      Expanded(child: Text(
+                        'Cẩm nang sắm lễ và mâm cỗ',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
+                      )),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -423,7 +424,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 16),
 
-          // MỤC 2C: CÀI ĐẶT NHẮC NHỞ & THÔNG BÁO TỰ ĐỘNG
+          // Nhắc trong ứng dụng khi người dùng mở trang chủ.
           Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
@@ -442,7 +443,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(width: 8),
                       const Expanded(
                         child: Text(
-                          'Thông Báo & Nhắc Nhở Tự Động',
+                          'Nhắc lịch trong ứng dụng',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -461,13 +462,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Tự động báo chuông trước ngày giỗ và ngày sinh nhật để gia đình chủ động chuẩn bị chu đáo.',
+                    'Lời nhắc hiện trên trang chủ khi mở ứng dụng. Hiện chưa có chuông thông báo khi ứng dụng đã đóng.',
                     style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   if (_remindersEnabled) ...[
                     const Divider(height: 24),
                     const Text(
-                      'Thời gian nhắc nhở trước:',
+                        'Hiện lời nhắc trước tối đa:',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13.5,
@@ -518,11 +519,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       contentPadding: EdgeInsets.zero,
                       activeColor: const Color(0xFF8B1E0F),
                       title: const Text(
-                        'Nhắc đúng sáng ngày diễn ra (Lễ Chính Kỵ)',
+                        'Nhắc vào ngày diễn ra',
                         style: TextStyle(fontSize: 13.5),
                       ),
                       subtitle: const Text(
-                        'Nhắc làm mâm cúng sáng ngày giỗ / chúc mừng sinh nhật',
+                        'Hiện trên trang chủ khi đến ngày giỗ hoặc sinh nhật',
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       value: _remindChinhKy,
@@ -552,13 +553,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: const [
                       Icon(Icons.folder_zip_outlined, color: Colors.teal),
                       SizedBox(width: 8),
-                      Text(
-                        'Sao Lưu & Phục Hồi Dữ Liệu (.json)',
+                      Expanded(child: Text(
+                        'Sao lưu và khôi phục dữ liệu',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
+                      )),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -695,6 +696,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Xóa dữ liệu trên thiết bị này'),
+              onPressed: _confirmClearLocalData,
             ),
           ),
           // MỤC 4: ĐỒNG BỘ ĐÁM MÂY (GOOGLE CLOUD & FIREBASE)
@@ -837,7 +846,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       SizedBox(width: 6),
                       Text(
-                        'Mã Kết Nối Gia Tộc (Family Sync Code):',
+                        'Mã kết nối gia tộc',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -868,7 +877,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             suffixIcon: IconButton(
                               icon: const Icon(Icons.copy, size: 18),
-                              tooltip: 'Sao chép mã gửi cho Vợ/Chồng',
+                              tooltip: 'Sao chép mã gửi cho người thân',
                               onPressed: () {
                                 final code = _syncCodeController.text.trim();
                                 if (code.isNotEmpty) {
@@ -977,16 +986,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: OutlinedButton.icon(
-                            icon: const Icon(
-                              Icons.person_add_alt_1_outlined,
-                              size: 18,
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            OutlinedButton.icon(
+                              icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                              label: const Text('Cấp quyền xem'),
+                              onPressed: _isSyncing ? null : _inviteViewer,
                             ),
-                            label: const Text('Cấp quyền xem'),
-                            onPressed: _isSyncing ? null : _inviteViewer,
-                          ),
+                            OutlinedButton.icon(
+                              icon: const Icon(Icons.person_remove_outlined, size: 18),
+                              label: const Text('Thu hồi quyền'),
+                              onPressed: _isSyncing ? null : _revokeViewer,
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1119,7 +1134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 12),
                   const Text(
                     'Sự Kiện Gia Tộc\n'
-                    'Phiên bản 1.4.0 (Bảo vệ dữ liệu gia tộc)\n\n'
+                    'Phiên bản 1.5.0 (Lịch đúng, lưu dữ liệu an toàn hơn)\n\n'
                     '• Thuật toán Âm Lịch Việt Nam chuẩn GMT+7 (TS. Hồ Ngọc Đức)\n'
                     '• Tính Giờ Hoàng Đạo, Can Chi, Tiết Khí 24 tiết\n'
                     '• Bố cục tương thích cả Máy Tính (Desktop) và Điện Thoại (Mobile)\n'
@@ -1168,11 +1183,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showExportFamilyBookDialog() {
-    final sortedEvents = List<EventItem>.from(widget.events)
-      ..sort((a, b) {
-        if (a.month != b.month) return a.month.compareTo(b.month);
-        return a.day.compareTo(b.day);
-      });
+    final occurrences = EventCalculator.getSortedOccurrences(widget.events);
 
     final buffer = StringBuffer();
     buffer.writeln('====================================');
@@ -1185,10 +1196,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     buffer.writeln('====================================\n');
 
-    for (int i = 0; i < sortedEvents.length; i++) {
-      final ev = sortedEvents[i];
+    for (int i = 0; i < occurrences.length; i++) {
+      final occurrence = occurrences[i];
+      final ev = occurrence.event;
       buffer.writeln('${i + 1}. ${ev.title}');
-      buffer.writeln('   • Ngày Âm lịch: Ngày ${ev.day} tháng ${ev.month} Âm');
+      if (ev.calendar == CalendarType.lunar) {
+        buffer.writeln('   • Ngày âm lịch gốc: ${ev.day}/${ev.month}${ev.isLeapMonth ? " nhuận" : ""}');
+      } else {
+        buffer.writeln('   • Ngày dương lịch gốc: ${ev.day}/${ev.month}');
+      }
+      final next = occurrence.nextSolarDate;
+      buffer.writeln('   • Lần tới: ${next.day}/${next.month}/${next.year} dương lịch');
       if (ev.personName != null && ev.personName!.isNotEmpty) {
         buffer.writeln(
           '   • Người được tưởng nhớ: ${ev.personName} (${ev.relation ?? ""})',
@@ -1270,6 +1288,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _confirmClearLocalData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Xóa dữ liệu trên thiết bị?'),
+        content: const Text(
+          'Sự kiện, ghi chú, gia phả và hồ sơ trên thiết bị này sẽ bị xóa. '
+          'Bản đám mây và tệp sao lưu đã xuất không bị xóa. '
+          'Hãy xuất bản sao lưu trước nếu còn cần dữ liệu.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Giữ dữ liệu'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Xóa trên thiết bị'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await widget.storageService.clearLocalData();
+      widget.onDataRestored([], [], []);
+      widget.onProfileUpdated(UserProfile());
+      if (!mounted) return;
+      setState(() {
+        _giaChuController.clear();
+        _diaChiController.clear();
+        _syncCodeController.clear();
+        _lastSyncTime = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã xóa dữ liệu trên thiết bị này.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Không xóa được dữ liệu: $error')),
+      );
+    }
+  }
+
   void _saveProfileChanges() {
     final updated = UserProfile(
       giaChu: _giaChuController.text.trim(),
@@ -1292,6 +1355,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       jsonContent: jsonStr,
     );
+  }
+
+  Future<bool> _restoreLocalData({
+    required List<EventItem> events,
+    required List<DailyNoteItem> notes,
+    required List<FamilyPerson> familyPeople,
+    UserProfile? profile,
+  }) async {
+    try {
+      await widget.storageService.replaceAllData(
+        events: events,
+        notes: notes,
+        familyPeople: familyPeople,
+        profile: profile,
+      );
+      return true;
+    } catch (error) {
+      debugPrint('Không phục hồi được dữ liệu cục bộ: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không lưu được bản phục hồi. Dữ liệu cũ trên thiết bị vẫn còn.')),
+        );
+      }
+      return false;
+    }
   }
 
   void _showBackupDialog() async {
@@ -1409,12 +1497,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     return;
                   }
 
-                  await widget.storageService.saveEvents(restoredEvents);
-                  await widget.storageService.saveNotes(restoredNotes);
-                  if (data['hasFamilyPeople'] == true) {
-                    await widget.storageService.saveFamilyPeople(
-                      restoredFamily,
-                    );
+                  final restored = await _restoreLocalData(
+                    events: restoredEvents,
+                    notes: restoredNotes,
+                    familyPeople: restoredFamily,
+                    profile: data['profile'] as UserProfile?,
+                  );
+                  if (!restored || !mounted) return;
+                  final restoredProfile = data['profile'] as UserProfile?;
+                  if (restoredProfile != null) {
+                    widget.onProfileUpdated(restoredProfile);
+                    _giaChuController.text = restoredProfile.giaChu;
+                    _diaChiController.text = restoredProfile.diaChi;
                   }
 
                   widget.onDataRestored(
@@ -1597,13 +1691,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                   return;
                 }
-                await widget.storageService.saveEvents(restoredEvents);
-                await widget.storageService.saveNotes(restoredNotes);
-                if (data['hasFamilyPeople'] == true) {
-                  await widget.storageService.saveFamilyPeople(restoredFamily);
-                }
+                final restored = await _restoreLocalData(
+                  events: restoredEvents,
+                  notes: restoredNotes,
+                  familyPeople: restoredFamily,
+                  profile: restoredProfile,
+                );
+                if (!restored || !mounted) return;
                 if (restoredProfile != null) {
-                  await widget.storageService.saveProfile(restoredProfile);
                   widget.onProfileUpdated(restoredProfile);
                   _giaChuController.text = restoredProfile.giaChu;
                   _diaChiController.text = restoredProfile.diaChi;
@@ -1711,6 +1806,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: result.success
             ? Colors.green.shade800
             : Colors.orange.shade900,
+        content: Text(result.message),
+      ),
+    );
+  }
+
+  Future<void> _revokeViewer() async {
+    final email = _memberEmailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nhập email cần thu hồi quyền xem.')),
+      );
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thu hồi quyền xem?'),
+        content: Text('Tài khoản $email sẽ không thể kéo bản gia tộc trên đám mây nữa. Dữ liệu họ đã tải về máy vẫn còn.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Thu hồi')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _isSyncing = true);
+    final result = await FirebaseSyncService().revokeViewerAccess(
+      _syncCodeController.text,
+      email,
+    );
+    if (!mounted) return;
+    setState(() => _isSyncing = false);
+    if (result.success) _memberEmailController.clear();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: result.success ? Colors.green.shade800 : Colors.orange.shade900,
         content: Text(result.message),
       ),
     );
@@ -1901,11 +2032,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
                 return;
               }
-              await widget.storageService.saveEvents(restoredEvents);
-              await widget.storageService.saveNotes(restoredNotes);
-              await widget.storageService.saveFamilyPeople(restoredFamily);
+              final restored = await _restoreLocalData(
+                events: restoredEvents,
+                notes: restoredNotes,
+                familyPeople: restoredFamily,
+                profile: restoredProfile,
+              );
+              if (!restored || !mounted) return;
               if (restoredProfile != null) {
-                await widget.storageService.saveProfile(restoredProfile);
                 widget.onProfileUpdated(restoredProfile);
                 _giaChuController.text = restoredProfile.giaChu;
                 _diaChiController.text = restoredProfile.diaChi;

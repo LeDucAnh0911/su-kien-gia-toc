@@ -75,7 +75,7 @@ void main() {
 
       // Giải mã JSON kiểm tra tính toàn vẹn
       final dynamic decoded = jsonDecode(jsonString);
-      expect(decoded['version'], equals('1.4.0'));
+      expect(decoded['version'], equals('1.5.0'));
       expect(decoded['events'], isA<List>());
       expect((decoded['events'] as List).length, equals(1));
       expect(decoded['notes'], isA<List>());

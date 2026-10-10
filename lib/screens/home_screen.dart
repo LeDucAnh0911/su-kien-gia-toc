@@ -115,63 +115,49 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: goldColor, width: 1.2),
-              ),
-              child: Icon(Icons.temple_buddhist, color: goldColor, size: 16),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'SỰ KIỆN GIA TỘC',
-              style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 0.8, fontSize: 17),
-            ),
-          ],
+        title: const Text(
+          'Sự kiện gia tộc',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
         backgroundColor: isDark ? const Color(0xFF1E1715) : primaryRed,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Icon(Icons.info_outline, color: goldColor),
-            tooltip: 'Thông tin bản thử nghiệm miễn phí',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (ctx) => PaywallScreen(
-                    profile: widget.profile,
-                    storageService: StorageService(),
-                    onProfileUpdated: widget.onProfileUpdated,
-                  ),
-                ),
-              );
+          PopupMenuButton<String>(
+            tooltip: 'Tiện ích khác',
+            icon: Icon(Icons.more_vert, color: goldColor),
+            onSelected: (item) {
+              switch (item) {
+                case 'about':
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (ctx) => PaywallScreen(
+                      profile: widget.profile,
+                      storageService: StorageService(),
+                      onProfileUpdated: widget.onProfileUpdated,
+                    ),
+                  ));
+                  break;
+                case 'offerings':
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (ctx) => const OfferingsGuideScreen(),
+                  ));
+                  break;
+                case 'converter':
+                  _openQuickConverter(context);
+                  break;
+                case 'prayers':
+                  widget.onNavigateTab(2);
+                  break;
+              }
             },
-          ),
-          IconButton(
-            icon: const Icon(Icons.restaurant_menu_rounded),
-            tooltip: 'Cẩm Nang Mâm Cỗ & Sắm Lễ',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (ctx) => const OfferingsGuideScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.swap_horiz_rounded),
-            tooltip: 'Đổi Lịch Âm - Dương',
-            onPressed: () => _openQuickConverter(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.auto_stories),
-            tooltip: 'Kho Văn Khấn Cổ Truyền',
-            onPressed: () => widget.onNavigateTab(2),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 'converter', child: Text('Đổi lịch âm – dương')),
+              PopupMenuItem(value: 'offerings', child: Text('Mâm cỗ và sắm lễ')),
+              PopupMenuItem(value: 'prayers', child: Text('Văn khấn')),
+              PopupMenuItem(value: 'about', child: Text('Giới thiệu ứng dụng')),
+            ],
           ),
         ],
       ),
@@ -262,7 +248,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: ((_activeTab == 'events' && widget.events.isEmpty) ||
+              (_activeTab == 'notes' && widget.notes.isEmpty))
+          ? null
+          : FloatingActionButton.extended(
         backgroundColor: primaryRed,
         foregroundColor: Colors.white,
         icon: Icon(_activeTab == 'events' ? Icons.add_circle_outline : Icons.note_add),
@@ -994,6 +983,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
+              if (widget.events.isEmpty)
               ElevatedButton.icon(
                 icon: const Icon(Icons.add),
                 label: const Text('Thêm sự kiện mới'),
@@ -1002,6 +992,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   foregroundColor: Colors.white,
                 ),
                 onPressed: _navigateToAddEvent,
+              )
+              else TextButton(
+                onPressed: () => setState(() {
+                  _searchQuery = '';
+                  _searchController.clear();
+                  _filterType = 'all';
+                }),
+                child: const Text('Xóa tìm kiếm và bộ lọc'),
               ),
             ],
           ),

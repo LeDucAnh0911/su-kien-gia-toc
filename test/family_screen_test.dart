@@ -5,7 +5,7 @@ import 'package:so_gio_app/screens/family_screen.dart';
 
 void main() {
   testWidgets('thêm người thân trên màn hình điện thoại', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = const Size(320, 640);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -15,9 +15,11 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: FamilyScreen(
       people: const [], onSaved: (person) => saved = person, onDeleted: (_) {},
     )));
-    await tester.tap(find.byIcon(Icons.person_add_alt_1));
+    await tester.tap(find.text('Thêm người đầu tiên'));
     await tester.pumpAndSettle();
     expect(find.text('Thêm người thân'), findsOneWidget);
+    expect(find.text('Ngày tháng, quan hệ và thông tin thêm'), findsOneWidget);
+    expect(find.text('Quan hệ Cha Mẹ'), findsNothing);
     await tester.enterText(find.byType(TextFormField).first, 'Nguyễn Văn An');
     await tester.tap(find.text('Lưu hồ sơ'));
     await tester.pumpAndSettle();

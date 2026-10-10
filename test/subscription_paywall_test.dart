@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sembast/sembast_memory.dart';
 import 'package:so_gio_app/screens/paywall_screen.dart';
 import 'package:so_gio_app/services/storage_service.dart';
 import 'package:so_gio_app/services/subscription_service.dart';
@@ -11,7 +12,7 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   test('Không thể tự kích hoạt Premium khi chưa có thanh toán', () async {
-    final storage = StorageService();
+    final storage = StorageService(databaseFactory: newDatabaseFactoryMemory());
     final profile = UserProfile();
     expect(SubscriptionService.paymentsAvailable, isFalse);
     await expectLater(

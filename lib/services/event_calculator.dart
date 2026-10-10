@@ -42,6 +42,7 @@ class EventCalculator {
       final result = VietnameseLunarEngine.getNextDeathAnniversary(
         lunarDay: event.day,
         lunarMonth: event.month,
+        isLeapMonth: event.isLeapMonth,
         fromSolarDate: today,
       );
 
@@ -82,7 +83,10 @@ class EventCalculator {
             : DateTime(nextYear, event.month, event.day);
       }
 
-      final daysRemaining = candidate.difference(today).inDays;
+      final daysRemaining = VietnameseLunarEngine.jdFromDate(
+            candidate.day, candidate.month, candidate.year,
+          ) -
+          VietnameseLunarEngine.jdFromDate(today.day, today.month, today.year);
       int? anniversary;
       if (event.year != null && candidate.year >= event.year!) {
         anniversary = candidate.year - event.year!;

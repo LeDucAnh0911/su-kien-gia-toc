@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'su-kien-gia-toc-v20261010-2';
+const CACHE_NAME = 'su-kien-gia-toc-v20261011-1';
 
 // Danh sách tài nguyên cốt lõi cần nạp sẵn để mở tức thì (< 1 giây) trên iPhone & Android
 const PRECACHE_ASSETS = [
@@ -44,7 +44,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys
+          .filter((key) => key.startsWith('su-kien-gia-toc-') && key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
       );
     }).then(() => self.clients.claim())
   );

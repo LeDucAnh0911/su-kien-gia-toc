@@ -205,6 +205,9 @@ class VietnameseLunarEngine {
 
   /// Chuyển đổi Âm lịch sang Dương lịch [day, month, year]
   static List<int>? lunarToSolar(int lunarDay, int lunarMonth, int lunarYear, {bool isLeap = false, double timezone = 7.0}) {
+    if (lunarDay < 1 || lunarDay > 30 || lunarMonth < 1 || lunarMonth > 12) {
+      return null;
+    }
     int a11, b11;
     if (lunarMonth < 11) {
       a11 = getLunarMonth11(lunarYear - 1, timezone);
@@ -223,19 +226,29 @@ class VietnameseLunarEngine {
       var leapMonth = leapOff - 2;
       if (leapMonth < 0) leapMonth += 12;
       if (isLeap && (lunarMonth != leapMonth)) return null;
-      if ((off >= leapOff - 1) || isLeap) off += 1;
+      // The regular month immediately before the leap month must keep its
+      // original offset. Only the leap month and following months shift.
+      if (off >= leapOff || isLeap) off += 1;
+    } else if (isLeap) {
+      return null;
     }
 
     final monthStart = getNewMoonDay(k + off, timezone);
-    return jdToDate(monthStart + lunarDay - 1);
+    final result = jdToDate(monthStart + lunarDay - 1);
+    final roundTrip = solarToLunar(result[0], result[1], result[2], timezone);
+    if (roundTrip.day != lunarDay || roundTrip.month != lunarMonth ||
+        roundTrip.year != lunarYear || roundTrip.isLeap != isLeap) {
+      return null;
+    }
+    return result;
   }
 
   /// Lấy số ngày của tháng âm lịch (29 hay 30 ngày)
-  static int getLunarMonthDays(int lunarMonth, int lunarYear) {
-    final res30 = lunarToSolar(30, lunarMonth, lunarYear, isLeap: false);
+  static int getLunarMonthDays(int lunarMonth, int lunarYear, {bool isLeap = false}) {
+    final res30 = lunarToSolar(30, lunarMonth, lunarYear, isLeap: isLeap);
     if (res30 != null) {
       final back = solarToLunar(res30[0], res30[1], res30[2]);
-      if (back.month == lunarMonth && back.day == 30) {
+      if (back.month == lunarMonth && back.day == 30 && back.isLeap == isLeap) {
         return 30;
       }
     }
@@ -260,23 +273,29 @@ class VietnameseLunarEngine {
   static NextDeathAnniversaryResult? getNextDeathAnniversary({
     required int lunarDay,
     required int lunarMonth,
+    bool isLeapMonth = false,
     DateTime? fromSolarDate,
   }) {
     final fromDate = fromSolarDate ?? DateTime.now();
     final currentYear = fromDate.year;
 
-    for (final yearCand in [currentYear, currentYear + 1]) {
-      final maxDays = getLunarMonthDays(lunarMonth, yearCand);
+    for (final yearCand in [currentYear - 1, currentYear, currentYear + 1, currentYear + 2]) {
+      // In years without that leap month, use the ordinary month. This is
+      // disclosed in the event editor so families know how the date is set.
+      final useLeap = isLeapMonth &&
+          lunarToSolar(1, lunarMonth, yearCand, isLeap: true) != null;
+      final maxDays = getLunarMonthDays(lunarMonth, yearCand, isLeap: useLeap);
       final targetDay = math.min(lunarDay, maxDays);
 
-      final res = lunarToSolar(targetDay, lunarMonth, yearCand, isLeap: false);
+      final res = lunarToSolar(targetDay, lunarMonth, yearCand, isLeap: useLeap);
       if (res != null) {
         final solarDate = DateTime(res[2], res[1], res[0]);
         // So sánh tính cả ngày hôm nay
         final checkFrom = DateTime(fromDate.year, fromDate.month, fromDate.day);
         if (!solarDate.isBefore(checkFrom)) {
-          final daysRemaining = solarDate.difference(checkFrom).inDays;
-          final tiengThuongDate = solarDate.subtract(const Duration(days: 1));
+          final daysRemaining = jdFromDate(res[0], res[1], res[2]) -
+              jdFromDate(checkFrom.day, checkFrom.month, checkFrom.year);
+          final tiengThuongDate = DateTime(res[2], res[1], res[0] - 1);
 
           return NextDeathAnniversaryResult(
             chinhKySolar: solarDate,

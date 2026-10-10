@@ -2,10 +2,13 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sembast/sembast.dart';
 
 import '../models/event_model.dart';
 import '../models/note_model.dart';
 import '../models/family_person.dart';
+import 'local_database_io.dart'
+    if (dart.library.js_interop) 'local_database_web.dart' as local_database;
 
 class UserProfile {
   String giaChu;
@@ -62,6 +65,22 @@ class UserProfile {
 }
 
 class StorageService {
+  StorageService({DatabaseFactory? databaseFactory})
+      : _databaseFactory = databaseFactory;
+
+  final DatabaseFactory? _databaseFactory;
+  static Future<Database>? _sharedDatabase;
+  Future<Database>? _testDatabase;
+  static Future<void>? _sharedMigration;
+  Future<void>? _testMigration;
+  Future<void> _pendingWrites = Future<void>.value();
+
+  static final _eventsStore = stringMapStoreFactory.store('events');
+  static final _notesStore = stringMapStoreFactory.store('notes');
+  static final _familyStore = stringMapStoreFactory.store('family');
+  static final _profileStore = stringMapStoreFactory.store('profile');
+  static final _metaStore = stringMapStoreFactory.store('meta');
+
   static const String _keyEvents = 'app_events_json';
   static const String _keyNotes = 'app_daily_notes_json';
   static const String _keyProfile = 'app_profile_json';
@@ -70,6 +89,155 @@ class StorageService {
   static const String _keyFamilySyncCode = 'app_family_sync_code';
   static const String _keyLastSyncTime = 'app_last_sync_time';
   static const String _keySyncRevisions = 'app_family_sync_revisions';
+
+  static void _checkRecordIds(List<Map<String, dynamic>> rows) {
+    final ids = <String>{};
+    for (final row in rows) {
+      final id = row['id'];
+      if (id is! String || id.isEmpty || !ids.add(id)) {
+        throw const FormatException('Bản ghi thiếu hoặc trùng mã định danh.');
+      }
+    }
+  }
+
+  Future<Database> _database() async {
+    final db = await (_databaseFactory == null
+        ? (_sharedDatabase ??= local_database.openLocalDatabase())
+        : (_testDatabase ??= _databaseFactory.openDatabase('so_gio_test')));
+    if (_databaseFactory == null) {
+      await (_sharedMigration ??= _migrateLegacyData(db));
+    } else {
+      await (_testMigration ??= _migrateLegacyData(db));
+    }
+    return db;
+  }
+
+  Future<void> _migrateLegacyData(Database db) async {
+    if (await _metaStore.record('legacy_migrated').get(db) != null) return;
+    final prefs = await SharedPreferences.getInstance();
+    List<Map<String, dynamic>> readLegacyList(String key) {
+      final raw = prefs.getString(key);
+      if (raw == null || raw.trim().isEmpty) return [];
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) {
+        throw FormatException('Dữ liệu cũ "$key" không phải danh sách.');
+      }
+      return decoded
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+    }
+
+    // Parse every legacy collection before starting the transaction. A corrupt
+    // collection must not turn into an empty list and overwrite the only copy.
+    final events = readLegacyList(_keyEvents)
+        .map((item) => EventItem.fromMap(item).toMap()).toList();
+    final notes = readLegacyList(_keyNotes)
+        .map((item) => DailyNoteItem.fromMap(item).toMap()).toList();
+    final family = readLegacyList(_keyFamily)
+        .map((item) => FamilyPerson.fromMap(item).toMap()).toList();
+    _checkRecordIds(events);
+    _checkRecordIds(notes);
+    _checkRecordIds(family);
+    final rawProfile = prefs.getString(_keyProfile);
+    final profile = rawProfile == null || rawProfile.trim().isEmpty
+        ? null
+        : UserProfile.fromMap(
+            Map<String, dynamic>.from(jsonDecode(rawProfile) as Map),
+          ).toMap();
+
+    await db.transaction((txn) async {
+      for (var i = 0; i < events.length; i++) {
+        await _eventsStore.record(events[i]['id'] as String)
+            .put(txn, {...events[i], '_order': i});
+      }
+      for (var i = 0; i < notes.length; i++) {
+        await _notesStore.record(notes[i]['id'] as String)
+            .put(txn, {...notes[i], '_order': i});
+      }
+      for (var i = 0; i < family.length; i++) {
+        await _familyStore.record(family[i]['id'] as String)
+            .put(txn, {...family[i], '_order': i});
+      }
+      if (profile != null) {
+        await _profileStore.record('current').put(txn, profile);
+      }
+      await _metaStore.record('legacy_migrated').put(txn, {
+        'done': true,
+        'at': DateTime.now().toIso8601String(),
+      });
+    });
+    // Keep the old preferences as a recovery copy. The marker prevents their
+    // re-import after users delete records in the new database.
+  }
+
+  Future<void> _queueWrite(Future<void> Function() action) {
+    final result = _pendingWrites.then((_) => action());
+    _pendingWrites = result.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    return result;
+  }
+
+  Future<List<Map<String, Object?>>> _readStore(
+    StoreRef<String, Map<String, Object?>> store,
+  ) async {
+    await _pendingWrites;
+    final rows = await store.find(await _database());
+    final values = rows.map((row) => row.value).toList();
+    values.sort((a, b) => ((a['_order'] as num?)?.toInt() ?? 0)
+        .compareTo((b['_order'] as num?)?.toInt() ?? 0));
+    return values;
+  }
+
+  Future<void> _replaceStore(
+    StoreRef<String, Map<String, Object?>> store,
+    List<Map<String, dynamic>> values,
+  ) => _queueWrite(() async {
+    _checkRecordIds(values);
+    final db = await _database();
+    await db.transaction((txn) async {
+      await store.delete(txn);
+      for (var i = 0; i < values.length; i++) {
+        final id = values[i]['id'] as String;
+        await store.record(id).put(txn, {...values[i], '_order': i});
+      }
+    });
+  });
+
+  Future<void> replaceAllData({
+    required List<EventItem> events,
+    required List<DailyNoteItem> notes,
+    required List<FamilyPerson> familyPeople,
+    UserProfile? profile,
+  }) {
+    final eventRows = events.map((e) => e.toMap()).toList();
+    final noteRows = notes.map((n) => n.toMap()).toList();
+    final familyRows = familyPeople.map((p) => p.toMap()).toList();
+    final profileRow = profile?.toMap();
+
+    Future<void> replaceRows(
+      DatabaseClient txn,
+      StoreRef<String, Map<String, Object?>> store,
+      List<Map<String, dynamic>> rows,
+    ) async {
+      _checkRecordIds(rows);
+      await store.delete(txn);
+      for (var i = 0; i < rows.length; i++) {
+        final id = rows[i]['id'] as String;
+        await store.record(id).put(txn, {...rows[i], '_order': i});
+      }
+    }
+
+    return _queueWrite(() async {
+      final db = await _database();
+      await db.transaction((txn) async {
+        await replaceRows(txn, _eventsStore, eventRows);
+        await replaceRows(txn, _notesStore, noteRows);
+        await replaceRows(txn, _familyStore, familyRows);
+        if (profileRow != null) {
+          await _profileStore.record('current').put(txn, profileRow);
+        }
+      });
+    });
+  }
   Future<String?> loadFamilySyncCode() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyFamilySyncCode);
@@ -128,106 +296,71 @@ class StorageService {
   }
 
   Future<List<FamilyPerson>> loadFamilyPeople() async {
-    final prefs = await SharedPreferences.getInstance();
-    final content = prefs.getString(_keyFamily);
-    if (content == null || content.trim().isEmpty) {
-      return [];
-    }
-    try {
-      final list = jsonDecode(content) as List<dynamic>;
-      if (list.isEmpty) {
-        return [];
-      }
-      return list
-          .map((item) => FamilyPerson.fromMap(item as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
-      return [];
-    }
+    final values = await _readStore(_familyStore);
+    return values.map((item) => FamilyPerson.fromMap(Map<String, dynamic>.from(item))).toList();
   }
 
   Future<void> saveFamilyPeople(List<FamilyPerson> people) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _keyFamily,
-      jsonEncode(people.map((p) => p.toMap()).toList()),
-    );
+    final snapshot = people.map((p) => p.toMap()).toList();
+    await _replaceStore(_familyStore, snapshot);
   }
 
-  /// Tải danh sách sự kiện từ SharedPreferences
   Future<List<EventItem>> loadEvents() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final content = prefs.getString(_keyEvents);
-
-      if (content == null || content.trim().isEmpty) {
-        return [];
-      }
-
-      final List<dynamic> list = jsonDecode(content);
-      if (list.isEmpty) {
-        return [];
-      }
-      return list
-          .map((item) => EventItem.fromMap(item as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      return [];
-    }
+    final values = await _readStore(_eventsStore);
+    return values.map((item) => EventItem.fromMap(Map<String, dynamic>.from(item))).toList();
   }
 
-  /// Lưu danh sách sự kiện
   Future<void> saveEvents(List<EventItem> events) async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = events.map((e) => e.toMap()).toList();
-    await prefs.setString(_keyEvents, jsonEncode(list));
+    final snapshot = events.map((e) => e.toMap()).toList();
+    await _replaceStore(_eventsStore, snapshot);
   }
 
   /// Tải danh sách ghi chú theo ngày
   Future<List<DailyNoteItem>> loadNotes() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final content = prefs.getString(_keyNotes);
-
-      if (content == null || content.trim().isEmpty) {
-        return [];
-      }
-
-      final List<dynamic> list = jsonDecode(content);
-      return list
-          .map((item) => DailyNoteItem.fromMap(item as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      return [];
-    }
+    final values = await _readStore(_notesStore);
+    return values.map((item) => DailyNoteItem.fromMap(Map<String, dynamic>.from(item))).toList();
   }
 
   /// Lưu danh sách ghi chú
   Future<void> saveNotes(List<DailyNoteItem> notes) async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = notes.map((n) => n.toMap()).toList();
-    await prefs.setString(_keyNotes, jsonEncode(list));
+    final snapshot = notes.map((n) => n.toMap()).toList();
+    await _replaceStore(_notesStore, snapshot);
   }
 
   /// Tải thông tin người dùng / gia chủ
   Future<UserProfile> loadProfile() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final content = prefs.getString(_keyProfile);
-      if (content == null) {
-        return UserProfile();
-      }
-      return UserProfile.fromMap(jsonDecode(content));
-    } catch (e) {
-      return UserProfile();
-    }
+    await _pendingWrites;
+    final value = await _profileStore.record('current').get(await _database());
+    return value == null ? UserProfile() : UserProfile.fromMap(Map<String, dynamic>.from(value));
   }
 
   /// Lưu thông tin người dùng
   Future<void> saveProfile(UserProfile profile) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyProfile, jsonEncode(profile.toMap()));
+    final snapshot = profile.toMap();
+    await _queueWrite(() async {
+      await _profileStore.record('current').put(await _database(), snapshot);
+    });
   }
+
+  /// Xóa dữ liệu trên thiết bị này; không tác động đến Firestore hoặc tệp đã xuất.
+  Future<void> clearLocalData() => _queueWrite(() async {
+    final db = await _database();
+    await db.transaction((txn) async {
+      await _eventsStore.delete(txn);
+      await _notesStore.delete(txn);
+      await _familyStore.delete(txn);
+      await _profileStore.delete(txn);
+      // Keep the migration marker until the old preferences are removed.
+    });
+    final prefs = await SharedPreferences.getInstance();
+    for (final key in [
+      _keyEvents, _keyNotes, _keyFamily, _keyProfile,
+      _keyFocusPersonId, _keyFamilySyncCode, _keyLastSyncTime,
+      _keySyncRevisions, 'reminder_settings_v1',
+    ]) {
+      await prefs.remove(key);
+    }
+  });
 
   /// Xuất dữ liệu ra chuỗi JSON để sao lưu (Backup)
   Future<String> exportBackupData(
@@ -238,7 +371,7 @@ class StorageService {
   ) async {
     final backup = {
       'app': 'SoGioVaKyNiem',
-      'version': '1.4.0',
+      'version': '1.5.0',
       'exportedAt': DateTime.now().toIso8601String(),
       'profile': profile.toMap(),
       'events': events.map((e) => e.toMap()).toList(),

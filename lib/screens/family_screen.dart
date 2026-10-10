@@ -1,12 +1,30 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as image;
 import '../models/family_person.dart';
 import '../services/family_tree_builder.dart';
 import '../services/kinship_service.dart';
 import '../services/storage_service.dart';
 import '../widgets/family_tree_canvas.dart';
 import 'paywall_screen.dart';
+
+Uint8List _prepareAvatar(Uint8List bytes) {
+  final decoded = image.decodeImage(bytes);
+  if (decoded == null) throw const FormatException('Không đọc được ảnh đã chọn.');
+  final upright = image.bakeOrientation(decoded);
+  final longestSide = upright.width > upright.height ? upright.width : upright.height;
+  final resized = longestSide > 512
+      ? image.copyResize(
+          upright,
+          width: upright.width >= upright.height ? 512 : null,
+          height: upright.height > upright.width ? 512 : null,
+        )
+      : upright;
+  return Uint8List.fromList(image.encodeJpg(resized, quality: 78));
+}
 
 class FamilyScreen extends StatefulWidget {
   final List<FamilyPerson> people;
@@ -152,7 +170,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: widget.people.isEmpty ? null : FloatingActionButton.extended(
         onPressed: () => _edit(),
         icon: const Icon(Icons.person_add_alt_1),
         label: const Text('Thêm người'),
@@ -1131,7 +1149,9 @@ class _FamilyScreenState extends State<FamilyScreen> {
                                   Positioned(
                                     bottom: 0,
                                     right: 0,
-                                    child: InkWell(
+                                    child: Tooltip(
+                                      message: 'Chọn ảnh từ thiết bị',
+                                      child: InkWell(
                                       onTap: () async {
                                         try {
                                           final files = await FilePicker.pickFiles(
@@ -1139,9 +1159,19 @@ class _FamilyScreenState extends State<FamilyScreen> {
                                           );
                                           if (files.isNotEmpty) {
                                             final bytes = await files.first.xFile.readAsBytes();
-                                            refresh(() => avatarBase64 = base64Encode(bytes));
+                                            if (bytes.length > 15 * 1024 * 1024) {
+                                              throw const FormatException('Ảnh vượt quá 15 MB.');
+                                            }
+                                            final optimized = await compute(_prepareAvatar, bytes);
+                                            refresh(() => avatarBase64 = base64Encode(optimized));
                                           }
-                                        } catch (_) {}
+                                        } catch (error) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('Không thêm được ảnh: $error')),
+                                            );
+                                          }
+                                        }
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.all(6),
@@ -1149,7 +1179,8 @@ class _FamilyScreenState extends State<FamilyScreen> {
                                           color: Color(0xFF8B1E0F),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 15),
+                                        child: const Icon(Icons.photo_library_outlined, color: Colors.white, size: 15),
+                                      ),
                                       ),
                                     ),
                                   ),
@@ -1157,7 +1188,9 @@ class _FamilyScreenState extends State<FamilyScreen> {
                                     Positioned(
                                       top: 0,
                                       right: 0,
-                                      child: InkWell(
+                                      child: Tooltip(
+                                        message: 'Xóa ảnh đại diện',
+                                        child: InkWell(
                                         onTap: () => refresh(() => avatarBase64 = null),
                                         child: Container(
                                           padding: const EdgeInsets.all(3),
@@ -1167,6 +1200,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                                           ),
                                           child: const Icon(Icons.close, color: Colors.white, size: 13),
                                         ),
+                                        ),
                                       ),
                                     ),
                                 ],
@@ -1175,7 +1209,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                             const SizedBox(height: 4),
                             Center(
                               child: Text(
-                                'Chạm máy ảnh để tải ảnh chân dung',
+                                'Chọn ảnh chân dung từ thiết bị',
                                 style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                               ),
                             ),
@@ -1186,7 +1220,7 @@ class _FamilyScreenState extends State<FamilyScreen> {
                               controller: name,
                               decoration: const InputDecoration(
                                 labelText: 'Họ và tên *',
-                                hintText: 'VD: Cha',
+                                hintText: 'VD: Nguyễn Văn An',
                                 border: OutlineInputBorder(),
                                 prefixIcon: Icon(Icons.person_outline),
                               ),
@@ -1195,10 +1229,10 @@ class _FamilyScreenState extends State<FamilyScreen> {
                             const SizedBox(height: 14),
 
                             // 2. Giới tính & Nhánh gia đình
-                            Row(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Expanded(
-                                  child: DropdownButtonFormField<String>(
+                                  DropdownButtonFormField<String>(
                                     value: gender,
                                     isExpanded: true,
                                     decoration: const InputDecoration(labelText: 'Giới tính', border: OutlineInputBorder()),
@@ -1209,10 +1243,8 @@ class _FamilyScreenState extends State<FamilyScreen> {
                                     ],
                                     onChanged: (v) => refresh(() => gender = v ?? 'other'),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: DropdownButtonFormField<String>(
+                                const SizedBox(height: 10),
+                                  DropdownButtonFormField<String>(
                                     value: branch,
                                     isExpanded: true,
                                     decoration: const InputDecoration(labelText: 'Nhánh gia đình', border: OutlineInputBorder()),
@@ -1225,10 +1257,17 @@ class _FamilyScreenState extends State<FamilyScreen> {
                                     ],
                                     onChanged: (v) => refresh(() => branch = v ?? 'noi'),
                                   ),
-                                ),
                               ],
                             ),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 8),
+
+                            ExpansionTile(
+                              initiallyExpanded: current != null || others.isNotEmpty,
+                              tilePadding: EdgeInsets.zero,
+                              childrenPadding: EdgeInsets.zero,
+                              title: const Text('Ngày tháng, quan hệ và thông tin thêm'),
+                              subtitle: const Text('Có thể bổ sung sau khi lưu hồ sơ'),
+                              children: [
 
                             // 3. Ngày sinh & Ngày mất
                             const Text('Ngày tháng sinh & mất', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
@@ -1414,6 +1453,8 @@ class _FamilyScreenState extends State<FamilyScreen> {
                                 hintText: 'Kỷ niệm, ngày giỗ âm, nghề nghiệp, vai vế...',
                                 border: OutlineInputBorder(),
                               ),
+                            ),
+                              ],
                             ),
                           ],
                         ),
