@@ -1,4 +1,5 @@
 /// Màn hình Cài Đặt & Sao Lưu / Phục Hồi Dữ Liệu
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -567,6 +568,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     'Hiện có ${widget.events.length} sự kiện, ${widget.notes.length} ghi chú và ${widget.familyPeople.length} người trong gia phả. Xuất ra tệp .json để lưu trữ hoặc nạp sang máy khác nhanh chóng, tiện lợi.',
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
+                  if (kIsWeb) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Trên iPhone, Safari và biểu tượng Màn hình chính có dữ liệu riêng. Nếu mở biểu tượng thấy trống, hãy quay lại nơi đã nhập dữ liệu để xuất tệp .json, rồi nạp tệp tại đây. Cập nhật ứng dụng thường giữ dữ liệu, nhưng bộ nhớ trên thiết bị không thay thế bản sao lưu.',
+                      style: TextStyle(fontSize: 12, color: Colors.deepOrange),
+                    ),
+                  ],
                   const SizedBox(height: 6),
                   const Text(
                     'Tệp JSON chưa mã hóa và có thể chứa thông tin người thân. Chỉ lưu ở nơi riêng tư.',

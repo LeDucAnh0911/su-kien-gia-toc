@@ -151,10 +151,19 @@
     });
     obs.observe(document.body, { childList: true, subtree: true });
 
+    // WebKit can grant durable storage to installed Home Screen web apps.
+    // This protects against automatic eviction where supported; it never
+    // changes or clears the user's existing IndexedDB data.
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(function(err) {
+        console.log('Storage persistence unavailable:', err);
+      });
+    }
+
     // Đăng ký Service Worker cho bản ứng dụng hiện tại.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('flutter_service_worker.js?v=20261011_3')
+        navigator.serviceWorker.register('flutter_service_worker.js?v=20261011_4')
           .then(function(reg) {
             console.log('PWA ServiceWorker ready with scope:', reg.scope);
           })
