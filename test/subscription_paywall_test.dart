@@ -37,8 +37,8 @@ void main() {
         onProfileUpdated: (_) {},
       ),
     ));
-    expect(find.text('Bản thử nghiệm miễn phí'), findsOneWidget);
+    expect(find.text('Bản dùng thử miễn phí'), findsOneWidget);
     expect(find.textContaining('10.000 đ'), findsNothing);
-    expect(find.textContaining('Google Play hoặc Apple'), findsOneWidget);
+    expect(find.textContaining('Tệp JSON chưa được mã hóa'), findsOneWidget);
   });
 }

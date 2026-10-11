@@ -1,0 +1,6 @@
+# Sao chép thành android/key.properties (đã được .gitignore bỏ qua).
+# Giữ tệp khóa và mật khẩu trong nơi lưu trữ riêng, có bản sao an toàn.
+storeFile=app/upload-keystore.jks
+storePassword=REPLACE_WITH_PRIVATE_PASSWORD
+keyAlias=upload
+keyPassword=REPLACE_WITH_PRIVATE_PASSWORD

@@ -8,10 +8,20 @@
 - Sao lưu và phục hồi qua tệp JSON. Tệp JSON là văn bản chưa mã hóa, cần giữ riêng tư.
 - Ngày âm lịch, tháng nhuận và ngày nhập không hợp lệ được kiểm tra trước khi lưu. Khi năm tới không có tháng nhuận tương ứng, sự kiện gốc tháng nhuận dùng cùng ngày ở tháng thường.
 - Lời nhắc hiện khi mở ứng dụng; chưa có thông báo hệ điều hành khi ứng dụng đã đóng.
-- Google Sign-In đã được cấu hình cho dự án Firebase `so-gio-gia-toc`. Đăng nhập không tự đồng bộ.
-- Đồng bộ Firestore là thao tác thủ công. Cloud Firestore và `firestore.rules` phải được triển khai an toàn trước khi sử dụng dữ liệu thật. Hiện chưa công bố tính năng này là đã hoạt động.
+- Bản dùng thử 1.6.0 hoạt động ngoại tuyến. Giao diện đăng nhập và đồng bộ được ẩn mặc định (`ENABLE_CLOUD_SYNC=false`), vì Cloud Firestore chưa triển khai. Không quảng bá đăng nhập là tính năng của bản phát hành này.
+- Cấu hình Firebase Web hiện có được giữ cho giai đoạn sau. Android/iOS dùng định danh cá nhân mới `com.leducanh0911.sukiengiatoc`; cần đăng ký lại hai ứng dụng trong Firebase trước khi bật đồng bộ trên bản cài.
 - Chủ gia tộc có thể cấp và thu hồi quyền xem theo email. Dữ liệu tải về máy người khác trước khi thu hồi vẫn còn trên máy họ. Ứng dụng chặn bản tải lên quá lớn cho một tài liệu Firestore; cần chuyển sang nhiều tài liệu trước khi gia phả lớn được đồng bộ.
-- Không có thanh toán hoặc gói VIP đang bán. Bản thử nghiệm được dùng miễn phí.
+- Không có thanh toán hoặc gói VIP đang bán. Bản dùng thử được dùng miễn phí.
+
+## Chuyển dữ liệu sang bản cài mới
+
+Định danh Android/iOS đã đổi khỏi tên tổ chức cũ. Hệ điều hành xem bản mới là ứng dụng khác và không tự chuyển dữ liệu cục bộ. Trước khi cài hoặc gỡ bản cũ:
+
+1. Mở đúng nơi đang có dữ liệu (Safari, biểu tượng Màn hình chính, hoặc APK cũ), vào **Cài đặt → Xuất Tệp .json**.
+2. Kiểm tra tệp đã xuất trong **Tệp/Downloads**. Có thể chọn lại tệp trong ứng dụng để xem số bản ghi rồi bấm **Hủy**.
+3. Cài bản mới, nạp tệp, đối chiếu số sự kiện, ghi chú và người trong gia phả. Giữ bản cũ và tệp sao lưu cho đến khi đã đối chiếu xong.
+
+Trước khi phát hành bản web mới lên GitHub Pages, phải giữ bản sao dữ liệu ở đúng nơi đang có dữ liệu trên iPhone và xác nhận có thể đọc lại tệp JSON.
 
 ## Phát triển
 

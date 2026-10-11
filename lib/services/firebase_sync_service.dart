@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 import '../firebase_options.dart';
 import '../models/event_model.dart';
@@ -43,12 +42,6 @@ class FirebaseSyncService {
 
   FirebaseAuth? _auth;
   FirebaseFirestore? _firestore;
-  Future<void>? _googleSignInInitialization;
-
-  static const _webClientId =
-      '350014991052-4kh8o8qjrrq5dncrbbr8iftd2q1r1h4u.apps.googleusercontent.com';
-  static const _iosClientId =
-      '350014991052-1g1e7hjlouf6cm7e10kikvog3fjdr9vb.apps.googleusercontent.com';
 
   User? get currentUser => _auth?.currentUser;
   Stream<User?> get authStateChanges =>
@@ -76,9 +69,14 @@ class FirebaseSyncService {
     }
   }
 
-  /// Đăng nhập bằng Google trên Web và Mobile
+  /// Đăng nhập bằng Google trên Web sau khi đồng bộ được bật.
   Future<User?> signInWithGoogle() async {
     try {
+      if (!kIsWeb) {
+        throw UnsupportedError(
+          'Đăng nhập trên bản cài chưa được cấu hình cho định danh mới.',
+        );
+      }
       if (!_isInitialized) {
         await initialize();
       }
@@ -87,33 +85,7 @@ class FirebaseSyncService {
         throw Exception('Firebase Auth chưa sẵn sàng');
       }
 
-      if (kIsWeb) {
-        final googleProvider = GoogleAuthProvider();
-        final userCredential = await _auth!.signInWithPopup(googleProvider);
-        return userCredential.user;
-      }
-
-      if (defaultTargetPlatform != TargetPlatform.android &&
-          defaultTargetPlatform != TargetPlatform.iOS) {
-        final userCredential = await _auth!.signInWithProvider(
-          GoogleAuthProvider(),
-        );
-        return userCredential.user;
-      }
-
-      _googleSignInInitialization ??= GoogleSignIn.instance.initialize(
-        clientId: defaultTargetPlatform == TargetPlatform.iOS
-            ? _iosClientId
-            : null,
-        serverClientId: _webClientId,
-      );
-      await _googleSignInInitialization;
-      final googleUser = await GoogleSignIn.instance.authenticate();
-      final googleAuth = googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        idToken: googleAuth.idToken,
-      );
-      final userCredential = await _auth!.signInWithCredential(credential);
+      final userCredential = await _auth!.signInWithPopup(GoogleAuthProvider());
       return userCredential.user;
     } catch (e) {
       debugPrint('Lỗi đăng nhập Google: $e');
@@ -125,12 +97,6 @@ class FirebaseSyncService {
   Future<void> signOut() async {
     try {
       await _auth?.signOut();
-      if (!kIsWeb &&
-          (defaultTargetPlatform == TargetPlatform.android ||
-              defaultTargetPlatform == TargetPlatform.iOS) &&
-          _googleSignInInitialization != null) {
-        await GoogleSignIn.instance.signOut();
-      }
     } catch (e) {
       debugPrint('Lỗi khi đăng xuất: $e');
     }
@@ -418,9 +384,7 @@ class FirebaseSyncService {
             throw const _SyncProblem('Email này chưa được cấp quyền xem.');
           }
         }
-        transaction.update(docRef, {
-          'memberEmails': emails,
-        });
+        transaction.update(docRef, {'memberEmails': emails});
       });
       return CloudSyncResult(
         success: true,

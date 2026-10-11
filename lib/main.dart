@@ -1,7 +1,8 @@
-/// Ứng dụng Sổ Giỗ & Kỷ Niệm (Lịch Gia Tộc & Ghi Chú)
+/// Ứng dụng Sự kiện gia tộc.
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'app_config.dart';
 import 'lunar_engine.dart';
 import 'models/event_model.dart';
 import 'models/note_model.dart';
@@ -26,8 +27,10 @@ void main() async {
   } catch (_) {}
   runApp(const SoGioApp());
 
-  // Kết nối Firebase ngầm, tuyệt đối không chặn khởi chạy giao diện
-  FirebaseSyncService().initialize().catchError((_) => false);
+  if (AppConfig.cloudSyncEnabled) {
+    // Chỉ kết nối khi dịch vụ và quy tắc bảo mật đã được triển khai.
+    FirebaseSyncService().initialize().catchError((_) => false);
+  }
 }
 
 class SoGioApp extends StatefulWidget {
@@ -74,15 +77,18 @@ class _SoGioAppState extends State<SoGioApp> {
       debugPrint('Không đọc được dữ liệu cục bộ: $error');
       if (!mounted) return;
       setState(() {
-        _loadError = 'Không đọc được dữ liệu đã lưu. Dữ liệu cũ chưa bị xóa. '
+        _loadError =
+            'Không đọc được dữ liệu đã lưu. Dữ liệu cũ chưa bị xóa. '
             'Hãy giữ ứng dụng và bộ nhớ trình duyệt nguyên trạng, rồi liên hệ hỗ trợ để khôi phục.';
         _isLoading = false;
       });
       return;
     }
 
-    final inviteCode =
-        Uri.base.queryParameters['family'] ?? Uri.base.queryParameters['join'];
+    final inviteCode = AppConfig.cloudSyncEnabled
+        ? (Uri.base.queryParameters['family'] ??
+              Uri.base.queryParameters['join'])
+        : null;
     if (inviteCode != null && inviteCode.trim().isNotEmpty) {
       final code = FamilySyncCode.normalize(inviteCode);
       if (FamilySyncCode.isValid(code)) {
@@ -103,17 +109,19 @@ class _SoGioAppState extends State<SoGioApp> {
       final messenger = _messengerKey.currentState;
       if (messenger == null) return;
       messenger.clearMaterialBanners();
-      messenger.showMaterialBanner(MaterialBanner(
-        content: const Text(
-          'Chưa lưu được thay đổi. Hãy giữ ứng dụng mở và xuất bản sao lưu trong Cài đặt.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: messenger.clearMaterialBanners,
-            child: const Text('Đóng'),
+      messenger.showMaterialBanner(
+        MaterialBanner(
+          content: const Text(
+            'Chưa lưu được thay đổi. Hãy giữ ứng dụng mở và xuất bản sao lưu trong Cài đặt.',
           ),
-        ],
-      ));
+          actions: [
+            TextButton(
+              onPressed: messenger.clearMaterialBanners,
+              child: const Text('Đóng'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -370,30 +378,30 @@ class _SoGioAppState extends State<SoGioApp> {
               ),
             )
           : _loadError != null
-              ? Scaffold(
-                  body: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.error_outline, size: 48),
-                          const SizedBox(height: 12),
-                          Text(_loadError!, textAlign: TextAlign.center),
-                          const SizedBox(height: 16),
-                          FilledButton(
-                            onPressed: () {
-                              setState(() => _isLoading = true);
-                              _loadData();
-                            },
-                            child: const Text('Thử đọc lại'),
-                          ),
-                        ],
+          ? Scaffold(
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, size: 48),
+                      const SizedBox(height: 12),
+                      Text(_loadError!, textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () {
+                          setState(() => _isLoading = true);
+                          _loadData();
+                        },
+                        child: const Text('Thử đọc lại'),
                       ),
-                    ),
+                    ],
                   ),
-                )
-              : LayoutBuilder(
+                ),
+              ),
+            )
+          : LayoutBuilder(
               builder: (context, constraints) {
                 final isWideScreen = constraints.maxWidth >= 820;
 

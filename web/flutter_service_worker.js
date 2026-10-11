@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'su-kien-gia-toc-v20261011-4';
+const CACHE_NAME = 'su-kien-gia-toc-v20261011-5';
 
 // Danh sách tài nguyên cốt lõi cần nạp sẵn để dùng khi mất mạng.
 const PRECACHE_ASSETS = [

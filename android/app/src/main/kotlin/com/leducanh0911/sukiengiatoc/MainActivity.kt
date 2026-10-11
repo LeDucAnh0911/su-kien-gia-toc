@@ -1,4 +1,4 @@
-package vn.buudienhatinh.sogio.so_gio_app
+package com.leducanh0911.sukiengiatoc
 
 import io.flutter.embedding.android.FlutterActivity
 

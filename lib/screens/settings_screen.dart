@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../app_config.dart';
 import '../models/event_model.dart';
 import '../models/note_model.dart';
 import '../models/family_person.dart';
@@ -68,9 +69,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadSyncState() async {
-    final code = await widget.storageService.loadFamilySyncCode();
-    final lastTime = await widget.storageService.loadLastSyncTime();
-    final user = FirebaseSyncService().currentUser;
+    final code = AppConfig.cloudSyncEnabled
+        ? await widget.storageService.loadFamilySyncCode()
+        : null;
+    final lastTime = AppConfig.cloudSyncEnabled
+        ? await widget.storageService.loadLastSyncTime()
+        : null;
+    final user = AppConfig.cloudSyncEnabled
+        ? FirebaseSyncService().currentUser
+        : null;
     await EventReminderService().loadSettings();
     final rem = EventReminderService().settings;
     if (mounted) {
@@ -174,7 +181,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'SỰ KIỆN GIA TỘC • BẢN THỬ NGHIỆM',
+                          'SỰ KIỆN GIA TỘC • DÙNG THỬ MIỄN PHÍ',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -184,7 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Hiện miễn phí; đồng bộ đám mây cần cấu hình bảo mật',
+                          'Dữ liệu lưu trên máy; nhớ xuất tệp sao lưu',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -577,7 +584,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ],
                   const SizedBox(height: 6),
                   const Text(
-                    'Tệp JSON chưa mã hóa và có thể chứa thông tin người thân. Chỉ lưu ở nơi riêng tư.',
+                    'Sau khi xuất, hãy kiểm tra tệp trong Tệp/Downloads. Có thể chọn tệp vừa lưu để xem số bản ghi rồi bấm Hủy. Tệp JSON chưa mã hóa; chỉ lưu ở nơi riêng tư.',
                     style: TextStyle(fontSize: 12, color: Colors.deepOrange),
                   ),
                   const SizedBox(height: 16),
@@ -714,8 +721,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: _confirmClearLocalData,
             ),
           ),
-          // MỤC 4: ĐỒNG BỘ ĐÁM MÂY (GOOGLE CLOUD & FIREBASE)
-          Card(
+          if (!AppConfig.cloudSyncEnabled)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.phonelink_lock_outlined, color: Color(0xFF8B1E0F)),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Bản dùng thử hoạt động ngoại tuyến. Đăng nhập Google và đồng bộ gia tộc sẽ xuất hiện sau khi dịch vụ được kiểm thử. Dữ liệu hiện chỉ ở thiết bị này và trong các tệp bạn đã tự sao lưu.',
+                        style: TextStyle(height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          // Chỉ hiện sau khi Firestore, đăng nhập và luồng xóa tài khoản sẵn sàng.
+          if (AppConfig.cloudSyncEnabled) Card(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
@@ -1114,7 +1140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          if (AppConfig.cloudSyncEnabled) const SizedBox(height: 16),
 
           // MỤC 5: GIỚI THIỆU
           Card(

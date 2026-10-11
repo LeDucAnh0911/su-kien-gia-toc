@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:so_gio_app/models/event_model.dart';
 import 'package:so_gio_app/models/note_model.dart';
@@ -43,10 +44,7 @@ void main() {
         ),
       ];
 
-      final profile = UserProfile(
-        giaChu: 'Người Mẫu',
-        diaChi: 'Hà Tĩnh',
-      );
+      final profile = UserProfile(giaChu: 'Người Mẫu', diaChi: 'Hà Tĩnh');
 
       final family = [
         const FamilyPerson(
@@ -75,7 +73,7 @@ void main() {
 
       // Giải mã JSON kiểm tra tính toàn vẹn
       final dynamic decoded = jsonDecode(jsonString);
-      expect(decoded['version'], equals('1.5.0'));
+      expect(decoded['version'], equals('1.6.0'));
       expect(decoded['events'], isA<List>());
       expect((decoded['events'] as List).length, equals(1));
       expect(decoded['notes'], isA<List>());
@@ -168,7 +166,21 @@ void main() {
         throwsFormatException,
       );
       expect(
-        () => storageService.parseBackupData('{"events":[],"notes":{},"familyPeople":[]}'),
+        () => storageService.parseBackupData(
+          '{"events":[],"notes":{},"familyPeople":[]}',
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => storageService.parseBackupData(
+          '{"app":"Khac","events":[],"notes":[]}',
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => storageService.parseBackupData(
+          '{"events":[{"id":"x"},{"id":"x"}],"notes":[]}',
+        ),
         throwsFormatException,
       );
     });

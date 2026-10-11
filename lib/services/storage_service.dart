@@ -8,7 +8,8 @@ import '../models/event_model.dart';
 import '../models/note_model.dart';
 import '../models/family_person.dart';
 import 'local_database_io.dart'
-    if (dart.library.js_interop) 'local_database_web.dart' as local_database;
+    if (dart.library.js_interop) 'local_database_web.dart'
+    as local_database;
 
 class UserProfile {
   String giaChu;
@@ -66,7 +67,7 @@ class UserProfile {
 
 class StorageService {
   StorageService({DatabaseFactory? databaseFactory})
-      : _databaseFactory = databaseFactory;
+    : _databaseFactory = databaseFactory;
 
   final DatabaseFactory? _databaseFactory;
   static Future<Database>? _sharedDatabase;
@@ -130,11 +131,14 @@ class StorageService {
     // Parse every legacy collection before starting the transaction. A corrupt
     // collection must not turn into an empty list and overwrite the only copy.
     final events = readLegacyList(_keyEvents)
-        .map((item) => EventItem.fromMap(item).toMap()).toList();
+        .map((item) => EventItem.fromMap(item).toMap())
+        .toList();
     final notes = readLegacyList(_keyNotes)
-        .map((item) => DailyNoteItem.fromMap(item).toMap()).toList();
+        .map((item) => DailyNoteItem.fromMap(item).toMap())
+        .toList();
     final family = readLegacyList(_keyFamily)
-        .map((item) => FamilyPerson.fromMap(item).toMap()).toList();
+        .map((item) => FamilyPerson.fromMap(item).toMap())
+        .toList();
     _checkRecordIds(events);
     _checkRecordIds(notes);
     _checkRecordIds(family);
@@ -147,16 +151,22 @@ class StorageService {
 
     await db.transaction((txn) async {
       for (var i = 0; i < events.length; i++) {
-        await _eventsStore.record(events[i]['id'] as String)
-            .put(txn, {...events[i], '_order': i});
+        await _eventsStore.record(events[i]['id'] as String).put(txn, {
+          ...events[i],
+          '_order': i,
+        });
       }
       for (var i = 0; i < notes.length; i++) {
-        await _notesStore.record(notes[i]['id'] as String)
-            .put(txn, {...notes[i], '_order': i});
+        await _notesStore.record(notes[i]['id'] as String).put(txn, {
+          ...notes[i],
+          '_order': i,
+        });
       }
       for (var i = 0; i < family.length; i++) {
-        await _familyStore.record(family[i]['id'] as String)
-            .put(txn, {...family[i], '_order': i});
+        await _familyStore.record(family[i]['id'] as String).put(txn, {
+          ...family[i],
+          '_order': i,
+        });
       }
       if (profile != null) {
         await _profileStore.record('current').put(txn, profile);
@@ -172,7 +182,10 @@ class StorageService {
 
   Future<void> _queueWrite(Future<void> Function() action) {
     final result = _pendingWrites.then((_) => action());
-    _pendingWrites = result.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    _pendingWrites = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
     return result;
   }
 
@@ -182,8 +195,11 @@ class StorageService {
     await _pendingWrites;
     final rows = await store.find(await _database());
     final values = rows.map((row) => row.value).toList();
-    values.sort((a, b) => ((a['_order'] as num?)?.toInt() ?? 0)
-        .compareTo((b['_order'] as num?)?.toInt() ?? 0));
+    values.sort(
+      (a, b) => ((a['_order'] as num?)?.toInt() ?? 0).compareTo(
+        (b['_order'] as num?)?.toInt() ?? 0,
+      ),
+    );
     return values;
   }
 
@@ -238,6 +254,7 @@ class StorageService {
       });
     });
   }
+
   Future<String?> loadFamilySyncCode() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyFamilySyncCode);
@@ -297,7 +314,9 @@ class StorageService {
 
   Future<List<FamilyPerson>> loadFamilyPeople() async {
     final values = await _readStore(_familyStore);
-    return values.map((item) => FamilyPerson.fromMap(Map<String, dynamic>.from(item))).toList();
+    return values
+        .map((item) => FamilyPerson.fromMap(Map<String, dynamic>.from(item)))
+        .toList();
   }
 
   Future<void> saveFamilyPeople(List<FamilyPerson> people) async {
@@ -307,7 +326,9 @@ class StorageService {
 
   Future<List<EventItem>> loadEvents() async {
     final values = await _readStore(_eventsStore);
-    return values.map((item) => EventItem.fromMap(Map<String, dynamic>.from(item))).toList();
+    return values
+        .map((item) => EventItem.fromMap(Map<String, dynamic>.from(item)))
+        .toList();
   }
 
   Future<void> saveEvents(List<EventItem> events) async {
@@ -318,7 +339,9 @@ class StorageService {
   /// Tải danh sách ghi chú theo ngày
   Future<List<DailyNoteItem>> loadNotes() async {
     final values = await _readStore(_notesStore);
-    return values.map((item) => DailyNoteItem.fromMap(Map<String, dynamic>.from(item))).toList();
+    return values
+        .map((item) => DailyNoteItem.fromMap(Map<String, dynamic>.from(item)))
+        .toList();
   }
 
   /// Lưu danh sách ghi chú
@@ -331,7 +354,9 @@ class StorageService {
   Future<UserProfile> loadProfile() async {
     await _pendingWrites;
     final value = await _profileStore.record('current').get(await _database());
-    return value == null ? UserProfile() : UserProfile.fromMap(Map<String, dynamic>.from(value));
+    return value == null
+        ? UserProfile()
+        : UserProfile.fromMap(Map<String, dynamic>.from(value));
   }
 
   /// Lưu thông tin người dùng
@@ -354,9 +379,15 @@ class StorageService {
     });
     final prefs = await SharedPreferences.getInstance();
     for (final key in [
-      _keyEvents, _keyNotes, _keyFamily, _keyProfile,
-      _keyFocusPersonId, _keyFamilySyncCode, _keyLastSyncTime,
-      _keySyncRevisions, 'reminder_settings_v1',
+      _keyEvents,
+      _keyNotes,
+      _keyFamily,
+      _keyProfile,
+      _keyFocusPersonId,
+      _keyFamilySyncCode,
+      _keyLastSyncTime,
+      _keySyncRevisions,
+      'reminder_settings_v1',
     ]) {
       await prefs.remove(key);
     }
@@ -371,7 +402,7 @@ class StorageService {
   ) async {
     final backup = {
       'app': 'SoGioVaKyNiem',
-      'version': '1.5.0',
+      'version': '1.6.0',
       'exportedAt': DateTime.now().toIso8601String(),
       'profile': profile.toMap(),
       'events': events.map((e) => e.toMap()).toList(),
@@ -386,14 +417,40 @@ class StorageService {
     if (jsonString.length > 10 * 1024 * 1024) {
       throw const FormatException('Tệp sao lưu vượt quá 10 MB.');
     }
-    final map = jsonDecode(jsonString) as Map<String, dynamic>;
-    if (map['events'] is! List || map['notes'] is! List ||
+    final decoded = jsonDecode(jsonString);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Tệp sao lưu phải là đối tượng JSON.');
+    }
+    final map = decoded;
+    if (map.containsKey('app') && map['app'] != 'SoGioVaKyNiem') {
+      throw const FormatException(
+        'Tệp này không thuộc ứng dụng Sự kiện gia tộc.',
+      );
+    }
+    if (map['events'] is! List ||
+        map['notes'] is! List ||
         (map.containsKey('familyPeople') && map['familyPeople'] is! List)) {
-      throw const FormatException('Bản sao lưu thiếu danh sách sự kiện hoặc ghi chú.');
+      throw const FormatException(
+        'Bản sao lưu thiếu danh sách sự kiện hoặc ghi chú.',
+      );
     }
     final List<dynamic> eventsList = map['events'] as List<dynamic>;
     final List<dynamic> notesList = map['notes'] as List<dynamic>;
-    final List<dynamic> familyList = (map['familyPeople'] as List<dynamic>?) ?? [];
+    final List<dynamic> familyList =
+        (map['familyPeople'] as List<dynamic>?) ?? [];
+    for (final rows in [eventsList, notesList, familyList]) {
+      final ids = <String>{};
+      for (final item in rows) {
+        if (item is! Map ||
+            item['id'] is! String ||
+            (item['id'] as String).isEmpty ||
+            !ids.add(item['id'] as String)) {
+          throw const FormatException(
+            'Tệp sao lưu có bản ghi thiếu hoặc trùng mã.',
+          );
+        }
+      }
+    }
 
     UserProfile? profile;
     if (map['profile'] != null && map['profile'] is Map<String, dynamic>) {
