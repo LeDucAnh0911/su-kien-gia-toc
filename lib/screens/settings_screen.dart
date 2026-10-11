@@ -1140,7 +1140,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     '• Bố cục tương thích cả Máy Tính (Desktop) và Điện Thoại (Mobile)\n'
                     '• Tích hợp Ghi Chú & Nhắc Việc theo ngày Âm/Dương trực tiếp trên lịch\n'
                     '• Tự động xử lý Tháng thiếu 29 ngày & Tháng nhuận\n'
-                    '• Nhắc nhở Lễ Tiên Thường (chiều trước) và Lễ Chính Kỵ (đúng ngày)\n'
+                    '• Hiện lời nhắc Tiên Thường và Chính Kỵ trên trang chủ khi mở ứng dụng\n'
                     '• Kho Văn Khấn Cổ Truyền tự điền tên Gia chủ, Tín chủ, Địa chỉ\n'
                     '• Gia phả nội ngoại và quan hệ các thế hệ',
                     style: TextStyle(fontSize: 13, height: 1.5),

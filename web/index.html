@@ -154,7 +154,7 @@
     // Đăng ký Service Worker cho bản ứng dụng hiện tại.
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('flutter_service_worker.js?v=20261011_2')
+        navigator.serviceWorker.register('flutter_service_worker.js?v=20261011_3')
           .then(function(reg) {
             console.log('PWA ServiceWorker ready with scope:', reg.scope);
           })
