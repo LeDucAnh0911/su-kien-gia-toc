@@ -24,6 +24,8 @@ Copy-Item web\flutter_service_worker.js build\web\flutter_service_worker.js -For
 
 `Build_Web.bat` tạo bản Flutter và chép Service Worker riêng vào `build/web`; script không chép giao diện `standalone_web` đè lên ứng dụng nữa. Nhánh `main` chứa mã nguồn, nhánh `gh-pages` chứa bản web đã biên dịch. Kiểm tra hai nhánh trước khi phát hành.
 
+Khi chép `build/web` sang checkout `gh-pages`, phải loại thư mục `.git` ẩn nếu nó còn nằm trong bản dựng cũ. Chép thư mục đó sẽ ghi đè thông tin nhánh của checkout phát hành. Sau khi clone, fetch nhánh `gh-pages` và xác nhận commit nền mới nhất trước khi chép tài nguyên.
+
 ## Thiết kế quyền đám mây
 
 1. Chủ gia tộc đăng nhập Google, tạo mã `FAM-` ngẫu nhiên và tải bộ dữ liệu đầu tiên lên. Tài khoản tạo dữ liệu là chủ sở hữu.
