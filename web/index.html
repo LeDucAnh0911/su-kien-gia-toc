@@ -114,6 +114,36 @@
       font-size: 12px;
     }
     .legal-links a { color: #F3E5AB; }
+    .update-banner {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      z-index: 1000000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #fff9e9;
+      color: #2c1810;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, .3);
+      font: 14px/1.4 system-ui, sans-serif;
+    }
+    .update-banner button {
+      flex: none;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #8b1e0f;
+      color: white;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
@@ -162,8 +192,27 @@
 
     // Đăng ký Service Worker cho bản ứng dụng hiện tại.
     if ('serviceWorker' in navigator) {
+      var hadController = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (hadController && !document.getElementById('app-update-banner')) {
+          var banner = document.createElement('div');
+          banner.id = 'app-update-banner';
+          banner.className = 'update-banner';
+          banner.setAttribute('role', 'status');
+          var message = document.createElement('span');
+          message.textContent = 'Có bản mới. Lưu xong thao tác rồi tải lại để cập nhật.';
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.textContent = 'Cập nhật';
+          button.addEventListener('click', function() { window.location.reload(); });
+          banner.appendChild(message);
+          banner.appendChild(button);
+          document.body.appendChild(banner);
+        }
+        hadController = true;
+      });
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('flutter_service_worker.js?v=20261011_5')
+        navigator.serviceWorker.register('flutter_service_worker.js?v=20261012_6')
           .then(function(reg) {
             console.log('PWA ServiceWorker ready with scope:', reg.scope);
           })

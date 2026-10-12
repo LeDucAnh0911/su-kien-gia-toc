@@ -1166,9 +1166,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Sự Kiện Gia Tộc\n'
-                    'Phiên bản 1.5.0 (Lịch đúng, lưu dữ liệu an toàn hơn)\n\n'
+                    'Phiên bản ${AppConfig.appVersion}\n\n'
                     '• Thuật toán Âm Lịch Việt Nam chuẩn GMT+7 (TS. Hồ Ngọc Đức)\n'
                     '• Tính Giờ Hoàng Đạo, Can Chi, Tiết Khí 24 tiết\n'
                     '• Bố cục tương thích cả Máy Tính (Desktop) và Điện Thoại (Mobile)\n'

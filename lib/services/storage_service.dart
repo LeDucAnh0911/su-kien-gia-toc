@@ -7,6 +7,7 @@ import 'package:sembast/sembast.dart';
 import '../models/event_model.dart';
 import '../models/note_model.dart';
 import '../models/family_person.dart';
+import '../app_config.dart';
 import 'local_database_io.dart'
     if (dart.library.js_interop) 'local_database_web.dart'
     as local_database;
@@ -402,7 +403,7 @@ class StorageService {
   ) async {
     final backup = {
       'app': 'SoGioVaKyNiem',
-      'version': '1.6.0',
+      'version': AppConfig.appVersion,
       'exportedAt': DateTime.now().toIso8601String(),
       'profile': profile.toMap(),
       'events': events.map((e) => e.toMap()).toList(),
