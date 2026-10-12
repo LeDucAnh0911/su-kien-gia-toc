@@ -33,7 +33,7 @@ C:\src\flutter\bin\flutter.bat test
 
 `Build_Web.bat` tạo một thư mục `build/web-release-<thời điểm>` mới cho mỗi lần chạy và chép Service Worker riêng vào đó. Chỉ dùng thư mục sạch này để phát hành; `build/web` cũ có thể còn APK và thư mục `.git` từ những bản trước. Nhánh `main` chứa mã nguồn, nhánh `gh-pages` chứa bản web đã biên dịch. Kiểm tra hai nhánh trước khi phát hành.
 
-Khi chép `build/web` sang checkout `gh-pages`, phải loại thư mục `.git` ẩn nếu nó còn nằm trong bản dựng cũ. Chép thư mục đó sẽ ghi đè thông tin nhánh của checkout phát hành. Sau khi clone, fetch nhánh `gh-pages` và xác nhận commit nền mới nhất trước khi chép tài nguyên.
+Khi phát hành, cập nhật checkout `gh-pages` tới commit mới nhất rồi chỉ chép nội dung từ thư mục `build/web-release-<thời điểm>` vừa tạo. Không chép từ `build/web` cũ hoặc chép tệp `.git` sang checkout phát hành.
 
 ## Thiết kế quyền đám mây
 
