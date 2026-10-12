@@ -28,11 +28,10 @@ Trước khi phát hành bản web mới lên GitHub Pages, phải giữ bản s
 ```powershell
 C:\src\flutter\bin\flutter.bat pub get
 C:\src\flutter\bin\flutter.bat test
-C:\src\flutter\bin\flutter.bat build web --release --no-wasm-dry-run
-Copy-Item web\flutter_service_worker.js build\web\flutter_service_worker.js -Force
+.\Build_Web.bat
 ```
 
-`Build_Web.bat` tạo bản Flutter và chép Service Worker riêng vào `build/web`; script không chép giao diện `standalone_web` đè lên ứng dụng nữa. Nhánh `main` chứa mã nguồn, nhánh `gh-pages` chứa bản web đã biên dịch. Kiểm tra hai nhánh trước khi phát hành.
+`Build_Web.bat` tạo một thư mục `build/web-release-<thời điểm>` mới cho mỗi lần chạy và chép Service Worker riêng vào đó. Chỉ dùng thư mục sạch này để phát hành; `build/web` cũ có thể còn APK và thư mục `.git` từ những bản trước. Nhánh `main` chứa mã nguồn, nhánh `gh-pages` chứa bản web đã biên dịch. Kiểm tra hai nhánh trước khi phát hành.
 
 Khi chép `build/web` sang checkout `gh-pages`, phải loại thư mục `.git` ẩn nếu nó còn nằm trong bản dựng cũ. Chép thư mục đó sẽ ghi đè thông tin nhánh của checkout phát hành. Sau khi clone, fetch nhánh `gh-pages` và xác nhận commit nền mới nhất trước khi chép tài nguyên.
 
